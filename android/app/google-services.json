@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "171947197606",
+    "project_id": "vouch-tracker",
+    "storage_bucket": "vouch-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:171947197606:android:f718d8fc52ce65fcd22067",
+        "android_client_info": {
+          "package_name": "com.zamirszn.vouch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "171947197606-9hssp2ij877aud4ap89sp53kl9frndel.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zamirszn.vouch",
+            "certificate_hash": "6ebe519bc45b38fe4fbf12b379bd985c10438006"
+          }
+        },
+        {
+          "client_id": "171947197606-cj8uv2a6apejthdc1iaj9rbjs3vgc6hb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zamirszn.vouch",
+            "certificate_hash": "249d15344d58e737311e8fc74ed204ae44ef9159"
+          }
+        },
+        {
+          "client_id": "171947197606-o2u4j0j9ggn9v4fjgbkgbpm6vddc5hns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDV_lTZY41yKqs3lhjc610N_6OyySn6f1A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "171947197606-o2u4j0j9ggn9v4fjgbkgbpm6vddc5hns.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

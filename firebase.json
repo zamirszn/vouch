@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "vouch-tracker",
+          "appId": "1:171947197606:android:f718d8fc52ce65fcd22067",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "vouch-tracker",
+          "configurations": {
+            "android": "1:171947197606:android:f718d8fc52ce65fcd22067"
+          }
+        }
+      }
+    }
+  }
+}

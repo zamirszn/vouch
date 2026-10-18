@@ -1,0 +1,198 @@
+/// Call / WhatsApp / SMS shortcut sheet.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/day_entry.dart';
+import '../services/contact_service.dart';
+import '../theme/vouch_theme.dart';
+import 'sheet_frame.dart';
+
+Future<MarkMethod?> showContactSheet(
+  BuildContext context, {
+  required String name,
+  required String? phone,
+  String? message,
+}) {
+  return showVouchSheet<MarkMethod>(
+    context,
+    ContactSheet(name: name, phone: phone, message: message),
+  );
+}
+
+class ContactSheet extends StatelessWidget {
+  const ContactSheet({
+    super.key,
+    required this.name,
+    required this.phone,
+    this.message,
+  });
+
+  final String name;
+  final String? phone;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final hasPhone = (phone?.trim().isNotEmpty ?? false);
+
+    Future<void> launch(Future<bool> Function(ContactService) action) async {
+      final service = context.read<ContactService>();
+      final ok = await action(service);
+      if (!context.mounted) return;
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              hasPhone
+                  ? 'No app on this phone could handle that.'
+                  : 'Add $name’s phone number in Settings first.',
+            ),
+          ),
+        );
+      }
+    }
+
+    return SheetFrame(
+      title: 'Reach $name',
+      subtitle: 'Confirm out loud before you mark the day.',
+      child: Column(
+        children: <Widget>[
+          _ContactTile(
+            icon: Icons.call_rounded,
+            title: 'Phone call',
+            subtitle: phone?.trim().isNotEmpty == true ? phone! : 'No number yet',
+            color: VouchColors.indigo,
+            onTap: hasPhone ? () => launch((s) => s.call(phone)) : null,
+          ),
+          const SizedBox(height: 10),
+          _ContactTile(
+            icon: Icons.chat_bubble_rounded,
+            title: 'WhatsApp',
+            subtitle: 'Send a message or voice note',
+            color: const Color(0xFF25D366),
+            onTap: hasPhone
+                ? () => launch(
+                      (s) => s.whatsApp(phone, message: message),
+                    )
+                : null,
+          ),
+          const SizedBox(height: 10),
+          _ContactTile(
+            icon: Icons.sms_rounded,
+            title: 'SMS',
+            subtitle: 'Plain text message',
+            color: VouchColors.coral,
+            onTap: hasPhone
+                ? () => launch((s) => s.sms(phone, body: message))
+                : null,
+          ),
+          const SizedBox(height: 10),
+          _ContactTile(
+            icon: Icons.people_alt_rounded,
+            title: 'In person',
+            subtitle: 'Ask face to face, then come back and mark it',
+            color: const Color(0xFF5F9E1F),
+            onTap: () => Navigator.of(context).pop(MarkMethod.inPerson),
+          ),
+          if (!hasPhone) ...<Widget>[
+            const SizedBox(height: 16),
+            Text(
+              'Ask $name to add their number in Settings — or exchange numbers in person.',
+              style: text.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactTile extends StatelessWidget {
+  const _ContactTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final enabled = onTap != null;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: enabled ? 0.16 : 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: enabled ? color : scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: text.titleMedium?.copyWith(
+                        color: enabled ? null : scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: enabled
+                    ? scheme.onSurfaceVariant
+                    : scheme.onSurfaceVariant.withValues(alpha: 0.4),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
