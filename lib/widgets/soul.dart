@@ -263,7 +263,7 @@ class Sticker extends StatelessWidget {
             Text(
               label.toUpperCase(),
               style: TextStyle(
-                fontFamily: 'Bricolage',
+                fontFamily: 'InstrumentSans',
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.1,
@@ -281,14 +281,15 @@ class Sticker extends StatelessWidget {
   }
 }
 
-/// A crisp bordered surface with a printed offset shadow.
+/// A crisp bordered surface with a printed offset shadow. Flat stock, flat
+/// ink — no gradients, so hue reads as a deliberate signal.
 class InkCard extends StatelessWidget {
   const InkCard({
     super.key,
     required this.child,
     this.color,
-    this.padding = const EdgeInsets.all(20),
-    this.radius = 26,
+    this.padding = const EdgeInsets.all(18),
+    this.radius = 22,
     this.onTap,
     this.borderColor,
     this.border = true,
@@ -315,22 +316,21 @@ class InkCard extends StatelessWidget {
       clipBehavior: clipBehavior,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? scheme.surfaceContainerHigh,
+        color: color ??
+            (dark ? scheme.surfaceContainerHigh : VouchColors.cream),
         borderRadius: BorderRadius.circular(radius),
         border: border
             ? Border.all(
                 color: borderColor ??
-                    (dark
-                        ? scheme.onSurface.withValues(alpha: 0.14)
-                        : scheme.onSurface.withValues(alpha: 0.12)),
-                width: 1.4,
+                    scheme.onSurface.withValues(alpha: dark ? 0.18 : 0.13),
+                width: 1.2,
               )
             : null,
         boxShadow: shadow
             ? <BoxShadow>[
                 BoxShadow(
-                  color: scheme.shadow.withValues(alpha: dark ? 0.45 : 0.16),
-                  offset: const Offset(4, 4),
+                  color: scheme.shadow.withValues(alpha: dark ? 0.45 : 0.14),
+                  offset: const Offset(3, 3),
                   blurRadius: 0,
                 ),
               ]
@@ -361,6 +361,8 @@ class SoulButton extends StatelessWidget {
     this.expand = true,
     this.height = 58,
     this.compact = false,
+    this.arrowColor,
+    this.arrowForeground,
   });
 
   final String label;
@@ -371,15 +373,16 @@ class SoulButton extends StatelessWidget {
   final bool expand;
   final double height;
   final bool compact;
+  final Color? arrowColor;
+  final Color? arrowForeground;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final dark = scheme.brightness == Brightness.dark;
     final enabled = onPressed != null;
-    final bg = color ??
-        (dark ? VouchColors.cream : const Color(0xFF5B4BFF));
-    final fg = foreground ?? (dark ? const Color(0xFF171520) : VouchColors.cream);
+    final bg = color ?? (dark ? VouchColors.cream : VouchColors.ink);
+    final fg = foreground ?? (dark ? VouchColors.ink : VouchColors.cream);
     final labelStyle = _labelStyle(fg);
 
     final content = Opacity(
@@ -399,14 +402,14 @@ class SoulButton extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: fg.withValues(alpha: 0.22),
-            width: 1.2,
+            color: fg.withValues(alpha: 0.12),
+            width: 1,
           ),
           boxShadow: enabled
               ? <BoxShadow>[
                   BoxShadow(
                     color: scheme.shadow.withValues(
-                      alpha: dark ? 0.5 : 0.22,
+                      alpha: dark ? 0.5 : 0.18,
                     ),
                     offset: const Offset(3, 3),
                     blurRadius: 0,
@@ -438,10 +441,14 @@ class SoulButton extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: fg.withValues(alpha: 0.14),
+                  color: arrowColor ?? VouchColors.lime,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.arrow_forward_rounded, color: fg, size: 20),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: arrowForeground ?? VouchColors.ink,
+                  size: 20,
+                ),
               ),
             ],
           ],
@@ -467,7 +474,7 @@ class SoulButton extends StatelessWidget {
   }
 
   static TextStyle _labelStyle(Color fg) => TextStyle(
-        fontFamily: 'Bricolage',
+        fontFamily: 'InstrumentSans',
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: fg,
@@ -581,3 +588,384 @@ class _DotsPainter extends CustomPainter {
       oldDelegate.spacing != spacing ||
       oldDelegate.radius != radius;
 }
+
+/// Graph-paper rules behind the whole app. The grid is the layout: everything
+/// else is placed against it.
+class GraphPaper extends StatelessWidget {
+  const GraphPaper({
+    super.key,
+    this.spacing = 22,
+    this.majorEvery = 4,
+    this.alpha = 0.055,
+  });
+
+  final double spacing;
+  final int majorEvery;
+  final double alpha;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final base = scheme.onSurface.withValues(
+      alpha: scheme.brightness == Brightness.dark ? alpha * 1.5 : alpha,
+    );
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _GridPainter(
+          color: base,
+          majorColor: base.withValues(alpha: 0.95),
+          spacing: spacing,
+          majorEvery: majorEvery,
+        ),
+      ),
+    );
+  }
+}
+
+class _GridPainter extends CustomPainter {
+  const _GridPainter({
+    required this.color,
+    required this.majorColor,
+    required this.spacing,
+    required this.majorEvery,
+  });
+
+  final Color color;
+  final Color majorColor;
+  final double spacing;
+  final int majorEvery;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final minor = Paint()
+      ..color = color
+      ..strokeWidth = 0.7;
+    final major = Paint()
+      ..color = majorColor
+      ..strokeWidth = 0.9;
+
+    var i = 0;
+    for (var x = 0.0; x <= size.width; x += spacing) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        majorEvery > 0 && i % majorEvery == 0 ? major : minor,
+      );
+      i++;
+    }
+    var j = 0;
+    for (var y = 0.0; y <= size.height; y += spacing) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        majorEvery > 0 && j % majorEvery == 0 ? major : minor,
+      );
+      j++;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.majorColor != majorColor ||
+      oldDelegate.spacing != spacing;
+}
+
+/// Four printer's crop marks, drawn just inside the corners of a surface.
+class CropMarks extends StatelessWidget {
+  const CropMarks({
+    super.key,
+    required this.child,
+    this.color,
+    this.inset = 8,
+    this.length = 11,
+  });
+
+  final Widget child;
+  final Color? color;
+  final double inset;
+  final double length;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final resolved = color ?? scheme.onSurface.withValues(alpha: 0.38);
+    return CustomPaint(
+      foregroundPainter: _CropPainter(
+        color: resolved,
+        inset: inset,
+        length: length,
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CropPainter extends CustomPainter {
+  const _CropPainter({
+    required this.color,
+    required this.inset,
+    required this.length,
+  });
+
+  final Color color;
+  final double inset;
+  final double length;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.square;
+    final l = inset;
+    final t = inset;
+    final r = size.width - inset;
+    final b = size.height - inset;
+
+    void corner(Offset o, double dx, double dy) {
+      canvas.drawLine(o, o.translate(dx * length, 0), paint);
+      canvas.drawLine(o, o.translate(0, dy * length), paint);
+    }
+
+    corner(Offset(l, t), 1, 1);
+    corner(Offset(r, t), -1, 1);
+    corner(Offset(l, b), 1, -1);
+    corner(Offset(r, b), -1, -1);
+  }
+
+  @override
+  bool shouldRepaint(_CropPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.inset != inset ||
+      oldDelegate.length != length;
+}
+
+/// The editorial page head used by Today, History and You: a numbered
+/// margin label, a two-tone statement and an optional slot on the right.
+class PageHeader extends StatelessWidget {
+  const PageHeader({
+    super.key,
+    required this.eyebrow,
+    required this.title,
+    this.titleMuted,
+    this.subtitle,
+    this.index,
+    this.trailing,
+    this.titleSize = 40,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String? titleMuted;
+  final String? subtitle;
+  final String? index;
+  final Widget? trailing;
+  final double titleSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    final titleStyle = text.displaySmall?.copyWith(
+      fontSize: titleSize,
+      height: 0.96,
+      letterSpacing: -1.8,
+    );
+    final mutedStyle = titleStyle?.copyWith(
+      color: scheme.onSurfaceVariant,
+      fontWeight: FontWeight.w500,
+      fontVariations: const <FontVariation>[FontVariation('wght', 500)],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Asterisk(size: 11, color: scheme.secondary, strokeWidth: 2.2),
+            const SizedBox(width: 8),
+            Text(
+              eyebrow.toUpperCase(),
+              style: text.labelSmall?.copyWith(
+                color: scheme.onSurface,
+                letterSpacing: 1.7,
+              ),
+            ),
+            const Spacer(),
+            if (index != null)
+              Text(
+                index!,
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 1.2,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(title, style: titleStyle),
+                  if (titleMuted != null) Text(titleMuted!, style: mutedStyle),
+                  if (subtitle != null) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Text(
+                      subtitle!,
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (trailing != null) ...<Widget>[
+              const SizedBox(width: 14),
+              trailing!,
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A flat circular initial, used for people and numbered roles.
+class LetterBadge extends StatelessWidget {
+  const LetterBadge({
+    super.key,
+    required this.letter,
+    this.color = VouchColors.ink,
+    this.foreground,
+    this.size = 32,
+  });
+
+  final String letter;
+  final Color color;
+  final Color? foreground;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Text(
+        letter.toUpperCase(),
+        style: TextStyle(
+          fontFamily: 'InstrumentSans',
+          fontSize: size * 0.42,
+          fontWeight: FontWeight.w700,
+          height: 1,
+          color: foreground ?? VouchColors.cream,
+          fontVariations: const <FontVariation>[FontVariation('wght', 700)],
+        ),
+      ),
+    );
+  }
+}
+
+/// A measured scale of ticks with an optional needle — the technical gauge
+/// motif that runs through the interface.
+class TickScale extends StatelessWidget {
+  const TickScale({
+    super.key,
+    required this.count,
+    this.height = 30,
+    this.color,
+    this.needleIndex,
+    this.needleColor,
+    this.majorEvery = 4,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final int count;
+  final double height;
+  final Color? color;
+  final int? needleIndex;
+  final Color? needleColor;
+  final int majorEvery;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: padding,
+      child: CustomPaint(
+        size: Size(double.infinity, height),
+        painter: _TickPainter(
+          count: count,
+          color: color ?? scheme.onSurface.withValues(alpha: 0.55),
+          needleIndex: needleIndex,
+          needleColor: needleColor ?? scheme.secondary,
+          majorEvery: majorEvery,
+        ),
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  const _TickPainter({
+    required this.count,
+    required this.color,
+    required this.needleIndex,
+    required this.needleColor,
+    required this.majorEvery,
+  });
+
+  final int count;
+  final Color color;
+  final int? needleIndex;
+  final Color needleColor;
+  final int majorEvery;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (count <= 0 || size.width <= 0) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.1;
+    final step = size.width / count;
+    for (var i = 0; i < count; i++) {
+      final x = step * i + step / 2;
+      final major = majorEvery > 0 && i % majorEvery == 0;
+      final h = major ? size.height : size.height * 0.52;
+      canvas.drawLine(
+        Offset(x, size.height - h),
+        Offset(x, size.height),
+        paint..strokeWidth = major ? 1.4 : 1.0,
+      );
+    }
+    final needle = needleIndex;
+    if (needle != null && needle >= 0 && needle < count) {
+      final x = step * needle + step / 2;
+      final needlePaint = Paint()
+        ..color = needleColor
+        ..strokeWidth = 2;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), needlePaint);
+      final cap = Paint()..color = needleColor;
+      canvas.drawCircle(Offset(x, 2.5), 2.6, cap);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TickPainter oldDelegate) =>
+      oldDelegate.count != count ||
+      oldDelegate.color != color ||
+      oldDelegate.needleIndex != needleIndex ||
+      oldDelegate.needleColor != needleColor;
+}
+

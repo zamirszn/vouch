@@ -1,11 +1,13 @@
-/// The floating navigation dock: the active tab sits on a tilted, colour-block
-/// sticker.
+/// The floating navigation dock: a printed paper bar with one black pill that
+/// glides between tabs. Icons switch to acid inside the pill.
 library;
 
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../theme/vouch_theme.dart';
 
 class VouchDock extends StatelessWidget {
   const VouchDock({
@@ -33,34 +35,68 @@ class VouchDock extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(14, 0, 14, bottomInset + 12),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            height: 76,
+            height: 82,
             decoration: BoxDecoration(
-              color: scheme.surface.withValues(alpha: dark ? 0.72 : 0.78),
-              borderRadius: BorderRadius.circular(30),
+              color: (dark ? scheme.surfaceContainerHigh : VouchColors.cream)
+                  .withValues(alpha: dark ? 0.86 : 0.9),
+              borderRadius: BorderRadius.circular(28),
               border: Border.all(
                 color: scheme.onSurface.withValues(
-                  alpha: dark ? 0.12 : 0.10,
+                  alpha: dark ? 0.22 : 0.16,
                 ),
                 width: 1.2,
               ),
-            ),
-            child: Row(
-              children: <Widget>[
-                for (var i = 0; i < _items.length; i++)
-                  Expanded(
-                    child: _DockItem(
-                      icon: _items[i].$1,
-                      selectedIcon: _items[i].$2,
-                      label: _items[i].$3,
-                      selected: index == i,
-                      onTap: () => onSelected(i),
-                    ),
-                  ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: scheme.shadow.withValues(alpha: dark ? 0.4 : 0.12),
+                  offset: const Offset(0, 6),
+                  blurRadius: 22,
+                ),
               ],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = constraints.maxWidth / _items.length;
+                const bubbleWidth = 62.0;
+                const bubbleHeight = 34.0;
+
+                return Stack(
+                  children: <Widget>[
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 460),
+                      curve: Curves.easeOutBack,
+                      left: itemWidth * index + (itemWidth - bubbleWidth) / 2,
+                      top: 13,
+                      width: bubbleWidth,
+                      height: bubbleHeight,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: dark ? VouchColors.cream : VouchColors.ink,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        for (var i = 0; i < _items.length; i++)
+                          Expanded(
+                            child: _DockItem(
+                              icon: _items[i].$1,
+                              selectedIcon: _items[i].$2,
+                              label: _items[i].$3,
+                              selected: index == i,
+                              onTap: () => onSelected(i),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -88,58 +124,49 @@ class _DockItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final dark = scheme.brightness == Brightness.dark;
+    final active = dark ? VouchColors.ink : VouchColors.lime;
+    final foreground = selected ? active : scheme.onSurfaceVariant;
 
     return Semantics(
       button: true,
       selected: selected,
       label: label,
-      child: InkWell(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(26),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeOutBack,
-              width: 42,
-              height: 34,
-              decoration: BoxDecoration(
-                color: selected
-                    ? scheme.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(13),
-                border: selected
-                    ? Border.all(
-                        color: scheme.onPrimary.withValues(alpha: 0.18),
-                        width: 1.2,
-                      )
-                    : null,
-              ),
-              child: Transform.rotate(
-                angle: selected ? -0.06 : 0,
-                child: Icon(
-                  selected ? selectedIcon : icon,
-                  size: 22,
-                  color: selected
-                      ? scheme.onPrimary
-                      : scheme.onSurfaceVariant,
+            SizedBox(
+              height: 44,
+              child: Center(
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeOutBack,
+                  scale: selected ? 1.04 : 1,
+                  child: Icon(
+                    selected ? selectedIcon : icon,
+                    size: 21,
+                    color: foreground,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: text.labelSmall?.copyWith(
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              style: text.labelSmall!.copyWith(
                 color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
-                fontVariations: <FontVariation>[
-                  FontVariation('wght', selected ? 800 : 600),
-                ],
+                fontSize: 9.5,
+                letterSpacing: 1.1,
               ),
+              child: Text(label),
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),

@@ -46,6 +46,8 @@ class CalendarHeatmap extends StatelessWidget {
                     const <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
                     style: text.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
+                      fontSize: 9,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -90,8 +92,8 @@ class CalendarHeatmap extends StatelessWidget {
 
     final (Color bg, Color fg) = switch (state) {
       VouchDayState.completed => (
-          const Color(0xFF7FCB32),
-          const Color(0xFF1E3A00),
+          VouchColors.kept,
+          VouchColors.cream,
         ),
       VouchDayState.missed => (
           VouchColors.coral.withValues(alpha: 0.20),
@@ -117,13 +119,13 @@ class CalendarHeatmap extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
-          width: 40,
-          height: 40,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             color: bg,
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(8),
             border: isToday
-                ? Border.all(color: scheme.primary, width: 2)
+                ? Border.all(color: scheme.onSurface, width: 1.6)
                 : null,
           ),
           alignment: Alignment.center,
@@ -141,7 +143,6 @@ class CalendarHeatmap extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
                     color: fg.withValues(alpha: 0.75),
                   ),
                 ),

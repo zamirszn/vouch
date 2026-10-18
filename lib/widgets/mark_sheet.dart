@@ -11,7 +11,7 @@ import '../services/contact_service.dart';
 import '../theme/vouch_theme.dart';
 import 'pressable_spring.dart';
 import 'sheet_frame.dart';
-import 'vouch_loader.dart';
+import 'soul.dart';
 
 Future<DayStatus?> showMarkSheet(
   BuildContext context, {
@@ -195,7 +195,7 @@ class _MarkSheetState extends State<MarkSheet> {
                   icon: Icons.check_circle_rounded,
                   title: 'Kept',
                   subtitle: 'They did it',
-                  color: const Color(0xFF5F9E1F),
+                  color: VouchColors.kept,
                   onTap: () => setState(() => _status = DayStatus.completed),
                 ),
               ),
@@ -265,35 +265,19 @@ class _MarkSheetState extends State<MarkSheet> {
             text: 'A witness, not a judge. Say what happened.',
           ),
           const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: _status == DayStatus.completed
-                    ? const Color(0xFF5F9E1F)
-                    : VouchColors.coral,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: VouchLoader(size: 22, color: Colors.white),
-                    )
-                  : Icon(
-                      _status == DayStatus.completed
-                          ? Icons.check_rounded
-                          : Icons.block_rounded,
-                    ),
-              label: Text(
-                _saving
-                    ? 'Saving…'
-                    : _status == DayStatus.completed
-                        ? 'Mark kept'
-                        : 'Mark missed',
-              ),
-            ),
+          SoulButton(
+            label: _saving
+                ? 'Saving…'
+                : _status == DayStatus.completed
+                    ? 'Mark kept'
+                    : 'Mark missed',
+            onPressed: _saving ? null : _save,
+            color: _status == DayStatus.completed
+                ? VouchColors.kept
+                : VouchColors.coral,
+            foreground: VouchColors.cream,
+            arrowColor: VouchColors.cream,
+            arrowForeground: VouchColors.ink,
           ),
           const SizedBox(height: 6),
         ],
@@ -329,24 +313,38 @@ class _StatusChoice extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected
-              ? color.withValues(alpha: 0.14)
-              : scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(24),
+              ? color.withValues(alpha: 0.13)
+              : (scheme.brightness == Brightness.dark
+                  ? scheme.surfaceContainerHigh
+                  : VouchColors.cream),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? color
-                : scheme.outlineVariant.withValues(alpha: 0.5),
-            width: selected ? 1.8 : 1,
+                : scheme.onSurface.withValues(alpha: 0.13),
+            width: selected ? 1.6 : 1.1,
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Container(width: 8, height: 8, color: color),
+                const Spacer(),
+                Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.circle_outlined,
+                  color: selected ? color : scheme.onSurfaceVariant,
+                  size: 18,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Text(title, style: text.titleMedium),
             Text(
               subtitle,

@@ -1,8 +1,7 @@
-/// The Vouch mark: a cream cookie with an indigo check, drawn with expressive
-/// shapes so it can morph during entrances.
+/// The Vouch mark: a flat ink disc, a cream check and one acid dot. Printed,
+/// not glossy.
 library;
 
-import 'package:expressive_m3/expressive_m3.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/vouch_theme.dart';
@@ -27,7 +26,7 @@ class _BrandMarkState extends State<BrandMark>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1100),
+    duration: const Duration(milliseconds: 700),
   );
 
   @override
@@ -48,71 +47,57 @@ class _BrandMarkState extends State<BrandMark>
 
   @override
   Widget build(BuildContext context) {
-    final reduced =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? VouchColors.cream : VouchColors.ink;
+    final paper = dark ? VouchColors.ink : VouchColors.cream;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final t = reduced ? 1.0 : Curves.easeOutCubic.transform(_controller.value);
-        final scale = reduced ? 1.0 : 0.82 + 0.18 * t;
-        final morph = reduced
+        final t = reduced
             ? 1.0
-            : Curves.easeOutBack.transform(t).clamp(0.0, 1.0).toDouble();
-
+            : Curves.easeOutBack.transform(_controller.value).clamp(0.0, 1.0);
         return Transform.scale(
-          scale: scale,
+          scale: 0.86 + 0.14 * t,
           child: Container(
             width: widget.size,
             height: widget.size,
-            decoration: widget.showShadow
-                ? BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: <BoxShadow>[
+            decoration: BoxDecoration(
+              color: ink,
+              shape: BoxShape.circle,
+              boxShadow: widget.showShadow
+                  ? <BoxShadow>[
                       BoxShadow(
-                        color: VouchColors.indigo.withValues(alpha: 0.22),
-                        blurRadius: widget.size * 0.28,
-                        offset: Offset(0, widget.size * 0.10),
+                        color: VouchColors.coral.withValues(alpha: 0.9),
+                        offset: Offset(widget.size * 0.05, widget.size * 0.05),
+                        blurRadius: 0,
                       ),
-                    ],
-                  )
-                : null,
-            child: ShapeClip(
-              shape: ExpressiveShape.cookie4Sided,
-              from: ExpressiveShape.circle,
-              t: morph,
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[VouchColors.indigo, Color(0xFF2A1E7A)],
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              children: <Widget>[
+                Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: paper,
+                    size: widget.size * 0.48,
                   ),
                 ),
-                child: Stack(
-                  children: <Widget>[
-                    Positioned(
-                      top: widget.size * 0.17,
-                      right: widget.size * 0.20,
-                      child: Container(
-                        width: widget.size * 0.115,
-                        height: widget.size * 0.115,
-                        decoration: const BoxDecoration(
-                          color: VouchColors.coral,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+                Positioned(
+                  top: widget.size * 0.16,
+                  right: widget.size * 0.18,
+                  child: Container(
+                    width: widget.size * 0.16,
+                    height: widget.size * 0.16,
+                    decoration: const BoxDecoration(
+                      color: VouchColors.lime,
+                      shape: BoxShape.circle,
                     ),
-                    Center(
-                      child: Icon(
-                        Icons.check_rounded,
-                        color: VouchColors.cream,
-                        size: widget.size * 0.50,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

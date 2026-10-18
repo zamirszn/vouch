@@ -12,6 +12,7 @@ import '../theme/vouch_theme.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
+import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
 import '../widgets/vouch_loader.dart';
 
@@ -129,17 +130,36 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 26),
+                const SizedBox(height: 30),
                 Reveal(
-                  child: Text(
-                    'Got a code?',
-                    style: text.displaySmall?.copyWith(
-                      fontSize: 42,
-                      letterSpacing: -1,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Got a',
+                        style: text.displaySmall?.copyWith(
+                          fontSize: 44,
+                          height: 0.94,
+                          letterSpacing: -2,
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                          fontVariations: const <FontVariation>[
+                            FontVariation('wght', 500),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        'code?',
+                        style: text.displaySmall?.copyWith(
+                          fontSize: 44,
+                          height: 0.94,
+                          letterSpacing: -2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   'Enter the 8-character code from your person.',
                   style: text.bodyLarge?.copyWith(
@@ -213,75 +233,76 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                     index: '01',
                     title: 'Is this them?',
                   ),
-                  ExpressiveCard(
-                    color: scheme.primaryContainer.withValues(alpha: 0.55),
+                  InkCard(
+                    color: VouchColors.indigo,
+                    border: false,
                     padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            VouchAvatar(
-                              name: preview.ownerName,
-                              photoUrl: preview.ownerPhotoUrl,
-                              size: 52,
-                              ring: true,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    preview.ownerName,
-                                    style: text.titleLarge,
-                                  ),
-                                  Text(
-                                    'asked you to witness',
-                                    style: text.bodySmall?.copyWith(
-                                      color: scheme.onSurfaceVariant,
+                    child: CropMarks(
+                      color: VouchColors.cream.withValues(alpha: 0.35),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              VouchAvatar(
+                                name: preview.ownerName,
+                                photoUrl: preview.ownerPhotoUrl,
+                                size: 52,
+                                ring: true,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      preview.ownerName,
+                                      style: text.titleLarge?.copyWith(
+                                        color: VouchColors.cream,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      'asked you to witness',
+                                      style: text.bodySmall?.copyWith(
+                                        color: VouchColors.cream.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: VouchColors.cream.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: VouchColors.cream.withValues(
+                                  alpha: 0.22,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: scheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '“${preview.promise}”',
-                            style: text.titleMedium?.copyWith(height: 1.4),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: VouchColors.coral,
-                              foregroundColor: Colors.white,
+                            child: Text(
+                              '“${preview.promise}”',
+                              style: text.titleMedium?.copyWith(
+                                height: 1.4,
+                                color: VouchColors.cream,
+                              ),
                             ),
+                          ),
+                          const SizedBox(height: 20),
+                          SoulButton(
+                            label: _joining ? 'Joining…' : 'Join as partner',
                             onPressed: _joining ? null : _join,
-                            icon: _joining
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: VouchLoader(size: 22, color: Colors.white),
-                                  )
-                                : const Icon(Icons.handshake_rounded),
-                            label: Text(
-                              _joining ? 'Joining…' : 'Join as partner',
-                            ),
+                            color: VouchColors.cream,
+                            foreground: VouchColors.ink,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -28,7 +28,7 @@ class StatusPill extends StatelessWidget {
     return switch (state) {
       VouchDayState.completed => StatusPill(
           label: 'Kept',
-          color: const Color(0xFF3E7A12),
+          color: VouchColors.keptDeep,
           icon: Icons.check_rounded,
           dense: dense,
         ),
@@ -67,31 +67,32 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color.withValues(alpha: 0.14);
+    final bg = color.withValues(alpha: 0.12);
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: dense ? 9 : 12,
-        vertical: dense ? 4 : 6,
+        horizontal: dense ? 8 : 10,
+        vertical: dense ? 3 : 5,
       ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (icon != null) ...<Widget>[
-            Icon(icon, size: dense ? 13 : 15, color: color),
+            Icon(icon, size: dense ? 12 : 14, color: color),
             const SizedBox(width: 4),
           ],
           Text(
-            label,
+            label.toUpperCase(),
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
-              fontSize: dense ? 11.5 : 12.5,
-              letterSpacing: 0.2,
+              fontSize: dense ? 9.5 : 10.5,
+              letterSpacing: 1,
+              height: 1.2,
             ),
           ),
         ],

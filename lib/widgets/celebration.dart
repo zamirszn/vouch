@@ -8,6 +8,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/vouch_theme.dart';
+import 'soul.dart';
 
 Future<void> showCelebration(
   BuildContext context, {
@@ -97,7 +98,7 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
             VouchColors.indigo,
             VouchColors.coral,
             VouchColors.lime,
-            Color(0xFF7FCB32),
+            VouchColors.kept,
             VouchColors.cream,
           ],
         ),
@@ -107,66 +108,68 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
             child: Material(
               color: Colors.transparent,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+                padding: const EdgeInsets.fromLTRB(26, 30, 26, 22),
                 decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(34),
+                  color: scheme.brightness == Brightness.dark
+                      ? scheme.surfaceContainerHigh
+                      : VouchColors.cream,
+                  borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.6),
+                    color: scheme.onSurface.withValues(alpha: 0.8),
+                    width: 1.3,
                   ),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 40,
-                      offset: const Offset(0, 18),
+                      color: scheme.shadow.withValues(alpha: 0.28),
+                      offset: const Offset(6, 6),
+                      blurRadius: 0,
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Container(
-                      width: 86,
-                      height: 86,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: <Color>[
-                            Color(0xFF7FCB32),
-                            Color(0xFF3E7A12),
-                          ],
+                child: CropMarks(
+                  inset: 7,
+                  length: 12,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Container(
+                        width: 82,
+                        height: 82,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VouchColors.ink,
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: VouchColors.lime,
+                          size: 46,
                         ),
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 46,
+                      const SizedBox(height: 20),
+                      Text(
+                        widget.title,
+                        textAlign: TextAlign.center,
+                        style: text.headlineLarge,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      widget.title,
-                      textAlign: TextAlign.center,
-                      style: text.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.message,
-                      textAlign: TextAlign.center,
-                      style: text.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        height: 1.45,
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.message,
+                        textAlign: TextAlign.center,
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          height: 1.45,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        child: const Text('Keep going'),
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          child: const Text('Keep going'),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

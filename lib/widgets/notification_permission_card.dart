@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../services/notification_service.dart';
 import '../theme/vouch_theme.dart';
+import 'pressable_spring.dart';
 import 'section_header.dart';
 
 class NotificationPermissionCard extends StatefulWidget {
@@ -64,15 +65,16 @@ class _NotificationPermissionCardState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: VouchColors.coral.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
+              color: VouchColors.coral,
+              borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
               Icons.notifications_active_outlined,
-              color: VouchColors.coral,
+              color: VouchColors.cream,
+              size: 20,
             ),
           ),
           const SizedBox(width: 14),
@@ -96,13 +98,25 @@ class _NotificationPermissionCardState
                   ),
                 ),
                 const SizedBox(height: 12),
-                FilledButton.tonal(
-                  onPressed: _asking ? null : _enable,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                PressableSpring(
+                  onTap: _asking ? null : _enable,
+                  enabled: !_asking,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: VouchColors.ink,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _asking ? 'Opening…' : 'Allow',
+                      style: text.labelMedium?.copyWith(
+                        color: VouchColors.cream,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  child: Text(_asking ? 'Opening…' : 'Allow'),
                 ),
               ],
             ),

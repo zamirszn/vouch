@@ -4,8 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../theme/vouch_shapes.dart';
+import '../theme/vouch_theme.dart';
 import 'pressable_spring.dart';
-import 'soul.dart';
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
@@ -40,17 +40,19 @@ class SectionHeader extends StatelessWidget {
             Row(
               children: <Widget>[
                 Text(
-                  index!,
+                  '($index)',
                   style: text.labelSmall?.copyWith(
                     color: scheme.secondary,
-                    letterSpacing: 1.2,
-                    fontVariations: const <FontVariation>[
-                      FontVariation('wght', 800),
-                    ],
+                    letterSpacing: 1.3,
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(child: DashRule()),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: scheme.onSurface.withValues(alpha: 0.16),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -62,7 +64,13 @@ class SectionHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(title, style: text.titleLarge),
+                    Text(
+                      title,
+                      style: text.titleLarge?.copyWith(
+                        fontSize: 21,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
                     if (subtitle != null) ...<Widget>[
                       const SizedBox(height: 3),
                       Text(
@@ -110,12 +118,15 @@ class ExpressiveCard extends StatelessWidget {
       curve: Curves.easeOutCubic,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? scheme.surfaceContainerHigh,
+        color: color ??
+            (scheme.brightness == Brightness.dark
+                ? scheme.surfaceContainerHigh
+                : VouchColors.cream),
         borderRadius: radius,
         border: border
             ? Border.all(
                 color: scheme.onSurface.withValues(
-                  alpha: scheme.brightness == Brightness.dark ? 0.10 : 0.08,
+                  alpha: scheme.brightness == Brightness.dark ? 0.16 : 0.11,
                 ),
                 width: 1.2,
               )

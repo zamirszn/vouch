@@ -48,11 +48,22 @@ class SheetFrame extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+      padding: const EdgeInsets.fromLTRB(22, 10, 22, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              decoration: BoxDecoration(
+                color: scheme.onSurface.withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -64,13 +75,21 @@ class SheetFrame extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(title, style: text.headlineSmall),
+                    Text(
+                      title,
+                      style: text.headlineSmall?.copyWith(
+                        fontSize: 26,
+                        height: 1.02,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
                     if (subtitle != null) ...<Widget>[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         subtitle!,
                         style: text.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
+                          height: 1.4,
                         ),
                       ),
                     ],
@@ -109,13 +128,18 @@ class SheetNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(18),
+        color: scheme.brightness == Brightness.dark
+            ? scheme.surfaceContainerHigh
+            : VouchColors.cream,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: scheme.onSurface.withValues(alpha: 0.12),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 18, color: VouchColors.indigo),
+          Icon(icon, size: 17, color: VouchColors.indigo),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -73,7 +73,7 @@ class ContactSheet extends StatelessWidget {
             icon: Icons.chat_bubble_rounded,
             title: 'WhatsApp',
             subtitle: 'Send a message or voice note',
-            color: const Color(0xFF25D366),
+            color: const Color(0xFF1FA855),
             onTap: hasPhone
                 ? () => launch(
                       (s) => s.whatsApp(phone, message: message),
@@ -95,7 +95,7 @@ class ContactSheet extends StatelessWidget {
             icon: Icons.people_alt_rounded,
             title: 'In person',
             subtitle: 'Ask face to face, then come back and mark it',
-            color: const Color(0xFF5F9E1F),
+            color: VouchColors.kept,
             onTap: () => Navigator.of(context).pop(MarkMethod.inPerson),
           ),
           if (!hasPhone) ...<Widget>[
@@ -139,24 +139,26 @@ class _ContactTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(22),
+            color: scheme.brightness == Brightness.dark
+                ? scheme.surfaceContainerHigh
+                : VouchColors.cream,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.5),
+              color: scheme.onSurface.withValues(alpha: 0.12),
             ),
           ),
           child: Row(
             children: <Widget>[
               Container(
-                width: 46,
-                height: 46,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: enabled ? 0.16 : 0.08),
-                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: enabled ? 0.14 : 0.07),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: Icon(
                   icon,

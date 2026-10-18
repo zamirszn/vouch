@@ -171,27 +171,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Asterisk(size: 11, color: scheme.secondary),
-                const SizedBox(width: 7),
-                Text(
-                  'YOUR VOUCH',
-                  style: text.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    letterSpacing: 1.9,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            Text(
-              'You.',
-              style: text.displaySmall?.copyWith(
-                fontSize: 34,
-                height: 1.0,
-                letterSpacing: -0.9,
-              ),
+            PageHeader(
+              eyebrow: 'Your Vouch',
+              title: 'You',
+              titleMuted: '& them.',
+              index: '(003)',
+              subtitle: 'Account, rhythm and the person on the other side.',
             ),
             const SizedBox(height: 24),
             InkCard(
@@ -264,11 +249,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Row(
                   children: <Widget>[
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         color: VouchColors.indigo.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.schedule_rounded,
@@ -369,8 +354,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                IconButton.filledTonal(
+                IconButton.filled(
                   tooltip: 'Contact',
+                  style: IconButton.styleFrom(
+                    backgroundColor: VouchColors.ink,
+                    foregroundColor: VouchColors.lime,
+                  ),
                   onPressed: () => showContactSheet(
                     context,
                     name: partnerName.split(RegExp(r'\s+')).first,
@@ -394,24 +383,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ThemeMode.light,
                 ThemeMode.dark,
               ])
-                ChoiceChip(
+                _ChoicePill(
                   selected: theme.mode == mode,
-                  onSelected: (_) => theme.setMode(mode),
-                  avatar: Icon(
-                    switch (mode) {
-                      ThemeMode.system => Icons.brightness_auto_rounded,
-                      ThemeMode.light => Icons.light_mode_rounded,
-                      ThemeMode.dark => Icons.dark_mode_rounded,
-                    },
-                    size: 18,
-                  ),
-                  label: Text(
-                    switch (mode) {
-                      ThemeMode.system => 'System',
-                      ThemeMode.light => 'Light',
-                      ThemeMode.dark => 'Dark',
-                    },
-                  ),
+                  icon: switch (mode) {
+                    ThemeMode.system => Icons.brightness_auto_rounded,
+                    ThemeMode.light => Icons.light_mode_rounded,
+                    ThemeMode.dark => Icons.dark_mode_rounded,
+                  },
+                  label: switch (mode) {
+                    ThemeMode.system => 'System',
+                    ThemeMode.light => 'Light',
+                    ThemeMode.dark => 'Dark',
+                  },
+                  onTap: () => theme.setMode(mode),
                 ),
             ],
           ),
@@ -424,17 +408,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Wrap(
               spacing: 8,
               children: <Widget>[
-                ChoiceChip(
+                _ChoicePill(
                   selected: !isPartner,
-                  onSelected: (_) => controller.switchDemoRole(false),
-                  avatar: const Icon(Icons.flag_rounded, size: 18),
-                  label: const Text('Owner'),
+                  icon: Icons.flag_rounded,
+                  label: 'Owner',
+                  onTap: () => controller.switchDemoRole(false),
                 ),
-                ChoiceChip(
+                _ChoicePill(
                   selected: isPartner,
-                  onSelected: (_) => controller.switchDemoRole(true),
-                  avatar: const Icon(Icons.visibility_rounded, size: 18),
-                  label: const Text('Witness'),
+                  icon: Icons.visibility_rounded,
+                  label: 'Witness',
+                  onTap: () => controller.switchDemoRole(true),
                 ),
               ],
             ),
@@ -476,6 +460,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
+class _ChoicePill extends StatelessWidget {
+  const _ChoicePill({
+    required this.selected,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? VouchColors.cream : scheme.onSurface;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? VouchColors.ink
+                : VouchColors.cream.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? VouchColors.ink
+                  : scheme.onSurface.withValues(alpha: 0.16),
+              width: 1.1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: text.labelMedium?.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
@@ -507,22 +552,25 @@ class _SettingsTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(22),
+            color: scheme.brightness == Brightness.dark
+                ? scheme.surfaceContainerHigh
+                : VouchColors.cream,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.5),
+              color: scheme.onSurface.withValues(alpha: 0.12),
+              width: 1.2,
             ),
           ),
           child: Row(
             children: <Widget>[
               Container(
-                width: 42,
-                height: 42,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(15),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 21),
+                child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 13),
               Expanded(

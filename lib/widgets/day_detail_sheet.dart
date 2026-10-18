@@ -53,16 +53,19 @@ class DayDetailSheet extends StatelessWidget {
       title: DateFormat('EEEE, d MMMM').format(date),
       subtitle: friendlyDay(date, today: today),
       leading: Container(
-        width: 56,
-        height: 56,
+        width: 54,
+        height: 54,
         decoration: BoxDecoration(
-          color: VouchColors.indigo.withValues(alpha: 0.10),
-          shape: BoxShape.circle,
+          color: VouchColors.indigo,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
           child: Text(
             '${date.day}',
-            style: text.headlineSmall?.copyWith(color: VouchColors.indigo),
+            style: text.headlineSmall?.copyWith(
+              color: VouchColors.cream,
+              fontSize: 24,
+            ),
           ),
         ),
       ),
@@ -86,8 +89,13 @@ class DayDetailSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(20),
+                color: scheme.brightness == Brightness.dark
+                    ? scheme.surfaceContainerHigh
+                    : VouchColors.cream,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: scheme.onSurface.withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 children: <Widget>[
@@ -112,9 +120,9 @@ class DayDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: day.status == DayStatus.completed
-                    ? const Color(0xFF7FCB32).withValues(alpha: 0.12)
+                    ? VouchColors.kept.withValues(alpha: 0.12)
                     : VouchColors.coral.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

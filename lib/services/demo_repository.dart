@@ -21,7 +21,7 @@ class DemoTrackRepository implements TrackRepository {
     this.timeZone = 'Africa/Lagos',
     DateTime? now,
   }) {
-    _seed(now ?? DateTime.now());
+    _seed(now);
   }
 
   final String timeZone;
@@ -56,7 +56,11 @@ class DemoTrackRepository implements TrackRepository {
     'Confirmed on the phone. Short but real.',
   ];
 
-  void _seed(DateTime now) {
+  void _seed(DateTime? seed) {
+    // Anchor the demo to the calendar day the app will consider "today", so
+    // the seeded entry keeps matching as the clock rolls over. An explicit
+    // seed still wins for deterministic tests.
+    final now = seed ?? nowIn(timeZone);
     final today = DateTime(now.year, now.month, now.day);
     final started = today.subtract(const Duration(days: 41));
     final schedule = VouchSchedule(

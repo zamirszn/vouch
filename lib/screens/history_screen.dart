@@ -83,34 +83,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Asterisk(size: 11, color: scheme.secondary),
-                const SizedBox(width: 7),
-                Text(
-                  'HISTORY',
-                  style: text.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    letterSpacing: 1.9,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            Text(
-              'The record.',
-              style: text.displaySmall?.copyWith(
-                fontSize: 34,
-                height: 1.0,
-                letterSpacing: -0.9,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'No edits. Just the days.',
-              style: text.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+            PageHeader(
+              eyebrow: 'History',
+              title: 'The',
+              titleMuted: 'record.',
+              index: '(002)',
+              subtitle: 'No edits. Just the days.',
             ),
             const SizedBox(height: 24),
             InkCard(
@@ -191,7 +169,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   runSpacing: 8,
                   children: const <Widget>[
                     _LegendDot(
-                      color: Color(0xFF7FCB32),
+                      color: VouchColors.kept,
                       label: 'Kept',
                     ),
                     _LegendDot(color: VouchColors.coral, label: 'Missed'),
@@ -227,7 +205,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: _HistoryStat(
                     value: '${stats.completed}',
                     label: 'Days kept',
-                    color: const Color(0xFF4C7A16),
+                    color: VouchColors.keptDeep,
                   ),
                 ),
                 Container(
@@ -398,7 +376,7 @@ class _RecentRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           child: Row(
@@ -407,8 +385,11 @@ class _RecentRow extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(15),
+                  color: scheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: scheme.onSurface.withValues(alpha: 0.10),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

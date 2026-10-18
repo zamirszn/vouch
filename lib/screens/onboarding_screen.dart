@@ -1,136 +1,382 @@
 /// Choose: owner creating a promise, or partner joining one.
+///
+/// Page one is a full-bleed acid poster; page two is the printed choice sheet.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:liquid_swipe/liquid_swipe.dart';
 import 'package:provider/provider.dart';
 
 import '../state/auth_controller.dart';
 import '../theme/vouch_theme.dart';
-import '../widgets/animated_background.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/pressable_spring.dart';
-import '../widgets/reveal.dart';
+import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
 import 'create_track_screen.dart';
 import 'join_track_screen.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final LiquidController _controller = LiquidController();
+  int _page = 0;
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+
+    return Scaffold(
+      body: LiquidSwipe(
+        liquidController: _controller,
+        waveType: WaveType.liquidReveal,
+        enableSideReveal: true,
+        enableLoop: false,
+        slideIconWidget: _SwipeCue(page: _page),
+        preferDragFromRevealedArea: true,
+        onPageChangeCallback: (page) {
+          if (page != _page) setState(() => _page = page);
+        },
+        pages: <Widget>[
+          _PromisePage(auth: auth),
+          _RolePage(auth: auth),
+        ],
+      ),
+    );
+  }
+}
+
+class _SwipeCue extends StatelessWidget {
+  const _SwipeCue({required this.page});
+
+  final int page;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: VouchColors.ink,
+        shape: BoxShape.circle,
+        border: Border.all(color: VouchColors.ink, width: 1.2),
+      ),
+      child: Icon(
+        Icons.arrow_forward_rounded,
+        color: page == 0 ? VouchColors.lime : VouchColors.cream,
+        size: 22,
+      ),
+    );
+  }
+}
+
+class _PromisePage extends StatelessWidget {
+  const _PromisePage({required this.auth});
+
+  final AuthController auth;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
+    return ColoredBox(
+      color: VouchColors.lime,
+      child: Stack(
+        children: <Widget>[
+          const Positioned.fill(
+            child: IgnorePointer(
+              child: _AcidGrid(),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const BrandMark(
+                        size: 40,
+                        animate: false,
+                        showShadow: false,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Vouch',
+                        style: text.titleLarge?.copyWith(
+                          color: VouchColors.ink,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '(001)',
+                        style: text.labelSmall?.copyWith(
+                          color: VouchColors.limeDeep,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      VouchAvatar(
+                        name: auth.displayName,
+                        photoUrl: auth.photoUrl,
+                        size: 38,
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        color: VouchColors.ink,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'A SMALL DEAL',
+                        style: text.labelSmall?.copyWith(
+                          color: VouchColors.limeDeep,
+                          letterSpacing: 1.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Make a promise.',
+                    style: text.displayLarge?.copyWith(
+                      color: VouchColors.ink,
+                      fontSize: 52,
+                      height: 0.9,
+                      letterSpacing: -2.8,
+                    ),
+                  ),
+                  Text(
+                    'Name a witness.',
+                    style: text.displayLarge?.copyWith(
+                      color: VouchColors.limeDeep.withValues(alpha: 0.75),
+                      fontSize: 52,
+                      height: 0.9,
+                      letterSpacing: -2.8,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    width: 64,
+                    height: 2,
+                    color: VouchColors.ink.withValues(alpha: 0.55),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'One promise. One person keeping you to it.',
+                    style: text.bodyLarge?.copyWith(
+                      color: VouchColors.limeDeep,
+                      height: 1.45,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 42),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        'SWIPE',
+                        style: text.labelSmall?.copyWith(
+                          color: VouchColors.limeDeep,
+                          letterSpacing: 2.2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: VouchColors.ink.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '(002)',
+                        style: text.labelSmall?.copyWith(
+                          color: VouchColors.limeDeep,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AcidGrid extends StatelessWidget {
+  const _AcidGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _AcidGridPainter(),
+      size: Size.infinite,
+    );
+  }
+}
+
+class _AcidGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = VouchColors.ink.withValues(alpha: 0.09)
+      ..strokeWidth = 0.8;
+    for (var x = 0.0; x < size.width; x += 22) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (var y = 0.0; y < size.height; y += 22) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_AcidGridPainter oldDelegate) => false;
+}
+
+class _RolePage extends StatelessWidget {
+  const _RolePage({required this.auth});
+
+  final AuthController auth;
+
+  @override
+  Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 22, 24, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    const BrandMark(size: 46, animate: false, showShadow: false),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Vouch',
-                      style: text.titleLarge?.copyWith(letterSpacing: -0.3),
-                    ),
-                    const Spacer(),
-                    VouchAvatar(
-                      name: auth.displayName,
-                      photoUrl: auth.photoUrl,
-                      size: 42,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                Reveal(
-                  child: Text(
-                    'What brings you\nto Vouch?',
-                    style: text.displaySmall?.copyWith(
-                      fontSize: 42,
-                      height: 1.03,
-                      letterSpacing: -1.2,
+    return ColoredBox(
+      color: scheme.surface,
+      child: Stack(
+        children: <Widget>[
+          const Positioned.fill(child: GraphPaper(spacing: 22, alpha: 0.06)),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const BrandMark(
+                        size: 40,
+                        animate: false,
+                        showShadow: false,
+                      ),
+                      const SizedBox(width: 10),
+                      Text('Vouch', style: text.titleLarge),
+                      const Spacer(),
+                      Text(
+                        '(002)',
+                        style: text.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      VouchAvatar(
+                        name: auth.displayName,
+                        photoUrl: auth.photoUrl,
+                        size: 38,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 42),
+                  Text(
+                    'Which',
+                    style: text.displayLarge?.copyWith(
+                      fontSize: 50,
+                      height: 0.9,
+                      letterSpacing: -2.6,
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Reveal(
-                  delay: const Duration(milliseconds: 80),
-                  child: Text(
-                    'Pick your side.',
-                    style: text.bodyLarge?.copyWith(
+                  Text(
+                    'side?',
+                    style: text.displayLarge?.copyWith(
+                      fontSize: 50,
+                      height: 0.9,
+                      letterSpacing: -2.6,
                       color: scheme.onSurfaceVariant,
-                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                      fontVariations: const <FontVariation>[
+                        FontVariation('wght', 500),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                Reveal(
-                  delay: const Duration(milliseconds: 150),
-                  child: _RoleCard(
+                  const SizedBox(height: 12),
+                  Text(
+                    'Two people. One promise. Pick the part you play.',
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  _RoleCard(
+                    number: '01',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const CreateTrackScreen(),
                       ),
                     ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[Color(0xFF6B5BFF), Color(0xFF33229B)],
-                    ),
-                    foreground: Colors.white,
-                    eyebrow: 'I am the owner',
-                    title: 'I’m making\na promise',
-                    body:
-                        'One daily promise. Invite a witness.',
-                    icon: Icons.flag_rounded,
+                    background: VouchColors.ink,
+                    foreground: VouchColors.cream,
+                    accent: VouchColors.lime,
+                    title: 'I’m promising',
+                    body: 'Create the promise.',
                   ),
-                ),
-                const SizedBox(height: 16),
-                Reveal(
-                  delay: const Duration(milliseconds: 220),
-                  child: _RoleCard(
+                  const SizedBox(height: 14),
+                  _RoleCard(
+                    number: '02',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const JoinTrackScreen(),
                       ),
                     ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[
-                        VouchColors.coral.withValues(alpha: 0.22),
-                        VouchColors.coral.withValues(alpha: 0.10),
-                      ],
-                    ),
+                    background: VouchColors.cream,
                     foreground: scheme.onSurface,
-                    eyebrow: 'I am the partner',
-                    title: 'I’m here\nfor someone',
-                    body:
-                        'Set the rhythm. Mark the days.',
-                    icon: Icons.visibility_rounded,
+                    accent: VouchColors.coral,
+                    title: 'I’m witnessing',
+                    body: 'Join with a code.',
                     outlined: true,
                   ),
-                ),
-                const SizedBox(height: 26),
-                Center(
-                  child: Text(
-                    'One promise at a time.',
-                    style: text.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      letterSpacing: 0.6,
-                    ),
+                  const SizedBox(height: 26),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        'VOUCH / MMXXVI',
+                        style: text.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: scheme.onSurface.withValues(alpha: 0.18),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -138,98 +384,94 @@ class OnboardingScreen extends StatelessWidget {
 
 class _RoleCard extends StatelessWidget {
   const _RoleCard({
+    required this.number,
     required this.onTap,
-    required this.gradient,
+    required this.background,
     required this.foreground,
-    required this.eyebrow,
+    required this.accent,
     required this.title,
     required this.body,
-    required this.icon,
     this.outlined = false,
   });
 
+  final String number;
   final VoidCallback onTap;
-  final Gradient gradient;
+  final Color background;
   final Color foreground;
-  final String eyebrow;
+  final Color accent;
   final String title;
   final String body;
-  final IconData icon;
   final bool outlined;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return PressableSpring(
       onTap: onTap,
-      pressedScale: 0.97,
+      pressedScale: 0.975,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 24, 22, 24),
+        padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
         decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(32),
+          color: background,
+          borderRadius: BorderRadius.circular(22),
           border: outlined
-              ? Border.all(color: VouchColors.coral.withValues(alpha: 0.4))
+              ? Border.all(
+                  color: scheme.onSurface.withValues(alpha: 0.22),
+                  width: 1.2,
+                )
               : null,
-          boxShadow: outlined
-              ? null
-              : <BoxShadow>[
-                  BoxShadow(
-                    color: VouchColors.indigo.withValues(alpha: 0.28),
-                    blurRadius: 30,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: scheme.shadow.withValues(alpha: 0.16),
+              offset: const Offset(3, 3),
+              blurRadius: 0,
+            ),
+          ],
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    eyebrow.toUpperCase(),
-                    style: text.labelSmall?.copyWith(
-                      color: foreground.withValues(alpha: 0.72),
-                      letterSpacing: 1.4,
-                    ),
+            Row(
+              children: <Widget>[
+                Text(
+                  '($number)',
+                  style: text.labelSmall?.copyWith(
+                    color: foreground.withValues(alpha: 0.6),
+                    letterSpacing: 1.2,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    style: text.headlineMedium?.copyWith(
-                      color: foreground,
-                      height: 1.05,
-                      fontSize: 30,
-                    ),
+                ),
+                const Spacer(),
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    body,
-                    style: text.bodyMedium?.copyWith(
-                      color: foreground.withValues(alpha: 0.82),
-                      height: 1.42,
-                    ),
+                  child: Icon(
+                    Icons.arrow_outward_rounded,
+                    color: VouchColors.ink,
+                    size: 18,
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 26),
+            Text(
+              title,
+              style: text.headlineLarge?.copyWith(
+                color: foreground,
+                fontSize: 31,
+                letterSpacing: -1.0,
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 62,
-              height: 62,
-              decoration: BoxDecoration(
-                color: outlined
-                    ? VouchColors.coral.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Icon(
-                icon,
-                color: outlined ? VouchColors.coral : Colors.white,
-                size: 30,
+            const SizedBox(height: 4),
+            Text(
+              body,
+              style: text.bodyMedium?.copyWith(
+                color: foreground.withValues(alpha: 0.65),
               ),
             ),
           ],

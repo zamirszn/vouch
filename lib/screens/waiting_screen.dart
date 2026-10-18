@@ -11,11 +11,10 @@ import '../models/track.dart';
 import '../state/track_controller.dart';
 import '../theme/vouch_theme.dart';
 import '../widgets/animated_background.dart';
-import '../widgets/brand_mark.dart';
 import '../widgets/pressable_spring.dart';
-import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
+import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
 import '../widgets/vouch_loader.dart';
 
@@ -86,168 +85,204 @@ class _WaitingScreenState extends State<WaitingScreen> {
       body: AnimatedBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 18, 24, 30),
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    const BrandMark(size: 42, animate: false, showShadow: false),
-                    const SizedBox(width: 10),
-                    Text('Vouch', style: text.titleLarge),
+                    Text(
+                      'VOUCH / INVITE',
+                      style: text.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
                     const Spacer(),
                     VouchAvatar(
                       name: track.ownerName,
                       photoUrl: track.ownerPhotoUrl,
-                      size: 42,
+                      size: 40,
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                const Reveal(child: BrandMark(size: 84)),
                 const SizedBox(height: 22),
-                Reveal(
-                  child: Text(
-                    'Your promise is\nready to be seen.',
-                    style: text.displaySmall?.copyWith(
-                      fontSize: 42,
-                      height: 1.02,
-                      letterSpacing: -1.2,
-                    ),
-                  ),
+                PageHeader(
+                  eyebrow: 'The invite',
+                  title: 'Ready to be',
+                  titleMuted: 'seen.',
+                  index: '(002)',
+                  subtitle:
+                      'Send this to your witness. Vouch switches on when they join.',
+                  titleSize: 44,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Send this to your witness. Vouch switches on when they join.',
-                  style: text.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 26),
-                ExpressiveCard(
-                  color: VouchColors.indigo,
+                const SizedBox(height: 24),
+                InkCard(
+                  color: VouchColors.lime,
                   border: false,
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                  child: Column(
-                    children: <Widget>[
-                      Text(
-                        'INVITE CODE',
-                        style: text.labelSmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      PressableSpring(
-                        onTap: () => _copy(track.inviteCode),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            for (final char in track.inviteCode.split(''))
+                  padding: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: CropMarks(
+                    color: VouchColors.ink.withValues(alpha: 0.45),
+                    inset: 10,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'INVITE CODE · ONE USE',
+                            style: text.labelSmall?.copyWith(
+                              color: VouchColors.ink.withValues(alpha: 0.62),
+                              letterSpacing: 1.5,
+                              fontSize: 9,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          PressableSpring(
+                            onTap: () => _copy(track.inviteCode),
+                            pressedScale: 0.97,
+                            child: Row(
+                              children: <Widget>[
+                                for (var i = 0;
+                                    i < track.inviteCode.length;
+                                    i++)
+                                  Expanded(
+                                    child: Container(
+                                      height: 54,
+                                      margin: EdgeInsets.only(
+                                        right: i == track.inviteCode.length - 1
+                                            ? 0
+                                            : 5,
+                                      ),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: VouchColors.cream,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: VouchColors.ink.withValues(
+                                            alpha: 0.18,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        track.inviteCode[i],
+                                        style: text.headlineSmall?.copyWith(
+                                          color: VouchColors.ink,
+                                          fontSize: 24,
+                                          letterSpacing: 0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: <Widget>[
                               Container(
-                                width: 30,
-                                height: 42,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 2),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.13),
-                                  borderRadius: BorderRadius.circular(11),
-                                ),
+                                width: 6,
+                                height: 6,
+                                color: expired
+                                    ? VouchColors.coral
+                                    : VouchColors.keptDeep,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
                                 child: Text(
-                                  char,
-                                  style: text.headlineSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    letterSpacing: 0,
+                                  expired
+                                      ? 'Expired. Generate a fresh one below.'
+                                      : expiry == null
+                                          ? 'Does not expire.'
+                                          : 'Valid until ${DateFormat('d MMM, h:mm a').format(expiry.toLocal())}.',
+                                  style: text.labelSmall?.copyWith(
+                                    color: VouchColors.ink.withValues(
+                                      alpha: 0.72,
+                                    ),
+                                    letterSpacing: 0.4,
+                                    fontSize: 10,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        expired
-                            ? 'This code has expired. Generate a fresh one.'
-                            : expiry == null
-                                ? 'Does not expire'
-                                : 'Valid until ${DateFormat('d MMM, h:mm a').format(expiry.toLocal())}',
-                        style: text.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.72),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: VouchColors.indigoDeep,
-                              ),
-                              onPressed: () => _share(track),
-                              icon: const Icon(Icons.ios_share_rounded),
-                              label: const Text('Share code'),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          IconButton.filledTonal(
-                            tooltip: 'Copy code',
-                            style: IconButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.16),
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () => _copy(track.inviteCode),
-                            icon: const Icon(Icons.copy_rounded),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: SoulButton(
+                                  label: 'Share the code',
+                                  onPressed: () => _share(track),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              PressableSpring(
+                                onTap: () => _copy(track.inviteCode),
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: VouchColors.cream
+                                        .withValues(alpha: 0.55),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: VouchColors.ink.withValues(
+                                        alpha: 0.18,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.content_copy_rounded,
+                                    color: VouchColors.ink,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 26),
-                const SectionHeader(index: '01', title: 'While you wait'),
+                const SizedBox(height: 28),
+                const SectionHeader(
+                  index: '01',
+                  title: 'While you wait',
+                  subtitle: 'Three small steps, then it is live.',
+                ),
                 const _WaitingRow(
-                  icon: Icons.person_search_rounded,
+                  index: '01',
                   title: 'They join with the code',
                   subtitle: 'One code, one witness.',
+                  color: VouchColors.indigo,
                 ),
                 const _WaitingRow(
-                  icon: Icons.tune_rounded,
+                  index: '02',
                   title: 'They choose the rhythm',
                   subtitle: 'Days and time. You both get nudged.',
+                  color: VouchColors.coral,
                 ),
                 const _WaitingRow(
-                  icon: Icons.check_circle_outline_rounded,
+                  index: '03',
                   title: 'They mark, you write',
                   subtitle: 'You record it. They confirm.',
+                  color: VouchColors.kept,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 4),
                 const SheetNote(
                   icon: Icons.lock_outline_rounded,
                   text: 'One-time key. It stops working once someone joins.',
                 ),
-                const SizedBox(height: 18),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _refreshing ? null : _refresh,
-                        icon: _refreshing
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child:
-                                    VouchLoader(size: 22),
-                              )
-                            : const Icon(Icons.refresh_rounded),
-                        label: const Text('New code'),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 16),
+                SoulButton(
+                  label: _refreshing ? 'Generating…' : 'Generate a new code',
+                  color: VouchColors.cream,
+                  foreground: VouchColors.ink,
+                  icon: Icons.refresh_rounded,
+                  height: 52,
+                  onPressed: _refreshing ? null : _refresh,
                 ),
                 if (controller.error != null) ...<Widget>[
                   const SizedBox(height: 12),
@@ -267,14 +302,16 @@ class _WaitingScreenState extends State<WaitingScreen> {
 
 class _WaitingRow extends StatelessWidget {
   const _WaitingRow({
-    required this.icon,
+    required this.index,
     required this.title,
     required this.subtitle,
+    required this.color,
   });
 
-  final IconData icon;
+  final String index;
   final String title;
   final String subtitle;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -282,18 +319,23 @@ class _WaitingRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: VouchColors.indigo.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: VouchColors.indigo, size: 22),
+          Column(
+            children: <Widget>[
+              Container(width: 7, height: 7, color: color),
+              const SizedBox(height: 4),
+              Text(
+                index,
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 8.5,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -3,6 +3,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -110,10 +111,32 @@ class _VouchAppState extends State<VouchApp> with WidgetsBindingObserver {
               themeAnimationDuration: const Duration(milliseconds: 320),
               themeAnimationCurve: Curves.easeOutCubic,
               home: const RootGate(),
+              scrollBehavior: const VouchScrollBehavior(),
             ),
           );
         },
       ),
     );
   }
+}
+
+/// Elastic, rubber-band scrolling everywhere — the touch feel Cuberto-style
+/// sites aim for, rather than Android's hard edge.
+class VouchScrollBehavior extends MaterialScrollBehavior {
+  const VouchScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    );
+  }
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => <PointerDeviceKind>{
+        PointerDeviceKind.touch,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
 }

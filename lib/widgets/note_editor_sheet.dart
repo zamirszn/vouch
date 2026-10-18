@@ -7,7 +7,7 @@ import '../core/constants.dart';
 import '../theme/vouch_theme.dart';
 import 'section_header.dart';
 import 'sheet_frame.dart';
-import 'vouch_loader.dart';
+import 'soul.dart';
 
 Future<bool?> showNoteEditorSheet(
   BuildContext context, {
@@ -111,23 +111,14 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
                 'Your witness sees this. You can edit until they mark the day.',
           ),
           const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: VouchLoader(size: 22),
-                    )
-                  : Text(
-                      widget.initialNote == null ||
-                              widget.initialNote!.trim().isEmpty
-                          ? 'Save note'
-                          : 'Update note',
-                    ),
-            ),
+          SoulButton(
+            label: _saving
+                ? 'Saving…'
+                : widget.initialNote == null ||
+                        widget.initialNote!.trim().isEmpty
+                    ? 'Save note'
+                    : 'Update note',
+            onPressed: _saving ? null : _save,
           ),
           const SizedBox(height: 6),
         ],

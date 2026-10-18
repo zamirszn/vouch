@@ -10,7 +10,7 @@ import '../state/track_controller.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/reveal.dart';
 import '../widgets/sheet_frame.dart';
-import '../widgets/vouch_loader.dart';
+import '../widgets/soul.dart';
 
 class CreateTrackScreen extends StatefulWidget {
   const CreateTrackScreen({super.key});
@@ -75,10 +75,10 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      'STEP 1 OF 2',
+                      'STEP 01 / THE PROMISE',
                       style: text.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
-                        letterSpacing: 1.2,
+                        letterSpacing: 1.4,
                       ),
                     ),
                   ],
@@ -86,23 +86,41 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Reveal(
-                          child: Text(
-                            'What is the\none thing?',
-                            style: text.displaySmall?.copyWith(
-                              fontSize: 40,
-                              height: 1.03,
-                              letterSpacing: -1,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'What is',
+                                style: text.displaySmall?.copyWith(
+                                  fontSize: 42,
+                                  height: 0.94,
+                                  letterSpacing: -2,
+                                  color: scheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                  fontVariations: const <FontVariation>[
+                                    FontVariation('wght', 500),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'the one thing?',
+                                style: text.displaySmall?.copyWith(
+                                  fontSize: 42,
+                                  height: 0.94,
+                                  letterSpacing: -2,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Text(
                           'Small enough to do on a bad day.',
                           style: text.bodyLarge?.copyWith(
@@ -178,20 +196,9 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                           ),
                         ],
                         const SizedBox(height: 22),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 58,
-                          child: FilledButton.icon(
-                            onPressed: busy ? null : _create,
-                            icon: busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: VouchLoader(size: 22, color: Colors.white),
-                                  )
-                                : const Icon(Icons.arrow_forward_rounded),
-                            label: Text(busy ? 'Creating…' : 'Create promise'),
-                          ),
+                        SoulButton(
+                          label: busy ? 'Creating…' : 'Create promise',
+                          onPressed: busy ? null : _create,
                         ),
                       ],
                     ),

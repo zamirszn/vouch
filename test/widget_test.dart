@@ -56,7 +56,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final repository = DemoTrackRepository(now: DateTime(2026, 10, 18, 12));
+    final repository = DemoTrackRepository();
     final notifications = _TestNotifications();
     final auth = AuthController(null, repository, demoMode: true);
     final tracks = TrackController(repository, notifications, auth);

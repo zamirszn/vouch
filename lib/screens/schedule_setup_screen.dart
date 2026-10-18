@@ -1,7 +1,6 @@
 /// The partner chooses days, time and timezone; the owner sees a waiting state.
 library;
 
-import 'package:expressive_m3/expressive_m3.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
@@ -14,11 +13,11 @@ import '../services/notification_service.dart';
 import '../state/track_controller.dart';
 import '../theme/vouch_theme.dart';
 import '../widgets/animated_background.dart';
-import '../widgets/brand_mark.dart';
 import '../widgets/contact_sheet.dart';
-import '../widgets/reveal.dart';
+import '../widgets/pressable_spring.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
+import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
 import '../widgets/vouch_loader.dart';
 
@@ -141,113 +140,191 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
         intensity: 0.8,
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+            padding: const EdgeInsets.fromLTRB(22, 6, 22, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    const BrandMark(size: 42, animate: false, showShadow: false),
-                    const SizedBox(width: 10),
-                    Text('Vouch', style: text.titleLarge),
-                    const Spacer(),
                     if (Navigator.of(context).canPop())
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.close_rounded),
+                      )
+                    else
+                      const SizedBox(width: 48),
+                    const Spacer(),
+                    Text(
+                      '(003) / THE RHYTHM',
+                      style: text.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        letterSpacing: 1.4,
                       ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 28),
-                Reveal(
-                  child: Text(
-                    'Set the rhythm.',
-                    style: text.displaySmall?.copyWith(
-                      fontSize: 40,
-                      letterSpacing: -1,
+                const SizedBox(height: 12),
+                PageHeader(
+                  eyebrow: 'Witness duty',
+                  title: 'Set the',
+                  titleMuted: 'rhythm.',
+                  subtitle:
+                      'Witnessing ${track.ownerFirstName}’s promise. Both phones buzz together.',
+                  titleSize: 44,
+                ),
+                const SizedBox(height: 24),
+                InkCard(
+                  color: VouchColors.indigo,
+                  border: false,
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                  child: CropMarks(
+                    color: VouchColors.cream.withValues(alpha: 0.35),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        VouchAvatar(
+                          name: track.ownerName,
+                          photoUrl: track.ownerPhotoUrl,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'THE PROMISE',
+                                style: text.labelSmall?.copyWith(
+                                  color: VouchColors.cream.withValues(
+                                    alpha: 0.62,
+                                  ),
+                                  letterSpacing: 1.6,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                track.promise,
+                                style: text.titleMedium?.copyWith(
+                                  color: VouchColors.cream,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Witnessing ${track.ownerFirstName}’s promise. Both phones buzz together.',
-                  style: text.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ExpressiveCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          VouchAvatar(
-                            name: track.ownerName,
-                            photoUrl: track.ownerPhotoUrl,
-                            size: 42,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              track.promise,
-                              style: text.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 26),
+                const SizedBox(height: 28),
                 const SectionHeader(
                   index: '01',
                   title: 'Which days?',
+                  subtitle: 'The same pattern on both phones.',
                 ),
-                ExpressiveButtonGroup(
-                  expanded: true,
+                Row(
                   children: <Widget>[
-                    for (final kind in ScheduleKind.values)
-                      _KindButton(
-                        kind: kind,
-                        selected: _kind == kind,
-                        onTap: () => setState(() => _kind = kind),
+                    for (final kind in ScheduleKind.values) ...<Widget>[
+                      Expanded(
+                        child: _KindCard(
+                          kind: kind,
+                          selected: _kind == kind,
+                          onTap: () => setState(() => _kind = kind),
+                        ),
                       ),
+                      if (kind != ScheduleKind.values.last)
+                        const SizedBox(width: 8),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 26),
+                const SizedBox(height: 28),
                 const SectionHeader(index: '02', title: 'What time?'),
-                _SettingTile(
-                  icon: Icons.schedule_rounded,
-                  title: _time.format(context),
-                  subtitle: 'Reminder time',
-                  trailing: const Icon(Icons.edit_outlined),
+                InkCard(
                   onTap: _pickTime,
-                ),
-                const SizedBox(height: 10),
-                _SettingTile(
-                  icon: Icons.public_rounded,
-                  title: _timeZone.replaceAll('_', ' '),
-                  subtitle:
-                      'Timezone · ${DateTime.now().timeZoneName} on this phone',
-                  trailing: const Icon(Icons.unfold_more_rounded),
-                  onTap: _pickTimeZone,
-                ),
-                const SizedBox(height: 22),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: VouchColors.indigo.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+                  padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
                   child: Row(
                     children: <Widget>[
-                      const Icon(
-                        Icons.notifications_active_rounded,
-                        color: VouchColors.indigo,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              'REMINDER · BOTH PHONES',
+                              style: text.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                letterSpacing: 1.4,
+                                fontSize: 9,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _time.format(context),
+                              style: text.displaySmall?.copyWith(
+                                fontSize: 36,
+                                height: 0.95,
+                                letterSpacing: -1.6,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 14),
+                      _RoundArrow(color: VouchColors.indigo),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                InkCard(
+                  onTap: _pickTimeZone,
+                  padding: const EdgeInsets.fromLTRB(18, 15, 16, 15),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              'TIMEZONE',
+                              style: text.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                letterSpacing: 1.4,
+                                fontSize: 9,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _timeZone.replaceAll('_', ' '),
+                              style: text.titleMedium,
+                            ),
+                            Text(
+                              '${DateTime.now().timeZoneName} on this phone',
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _RoundArrow(color: VouchColors.mist),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                InkCard(
+                  color: VouchColors.ink,
+                  border: false,
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: VouchColors.lime,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,15 +332,18 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                             Text(
                               next == null
                                   ? 'No upcoming reminder'
-                                  : 'Next: ${DateFormat('EEE d MMM · h:mm a').format(next)}',
-                              style: text.titleSmall,
+                                  : 'NEXT · ${DateFormat('EEE d MMM · h:mm a').format(next).toUpperCase()}',
+                              style: text.labelSmall?.copyWith(
+                                color: VouchColors.cream.withValues(alpha: 0.72),
+                                letterSpacing: 1.1,
+                                fontSize: 9.5,
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'Scheduled in ${_timeZone.replaceAll('_', ' ')}.',
+                              'Both phones buzz in ${_timeZone.replaceAll('_', ' ')}.',
                               style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                                height: 1.4,
+                                color: VouchColors.cream,
                               ),
                             ),
                           ],
@@ -279,32 +359,39 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                     style: text.bodyMedium?.copyWith(color: scheme.error),
                   ),
                 ],
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: VouchLoader(size: 22, color: Colors.white),
-                          )
-                        : const Icon(Icons.bolt_rounded),
-                    label: Text(
-                      _saving
-                          ? 'Saving…'
-                          : track.schedule == null
-                              ? 'Activate the promise'
-                              : 'Update the schedule',
-                    ),
-                  ),
+                const SizedBox(height: 22),
+                SoulButton(
+                  label: _saving
+                      ? 'Saving…'
+                      : track.schedule == null
+                          ? 'Activate the promise'
+                          : 'Update the schedule',
+                  onPressed: _saving ? null : _save,
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RoundArrow extends StatelessWidget {
+  const _RoundArrow({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: const Icon(
+        Icons.arrow_outward_rounded,
+        color: VouchColors.cream,
+        size: 19,
       ),
     );
   }
@@ -324,65 +411,103 @@ class _OwnerWaiting extends StatelessWidget {
     return Scaffold(
       body: AnimatedBackground(
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Spacer(),
-                const BrandMark(size: 96),
+                PageHeader(
+                  eyebrow: 'Witness duty',
+                  title: '${track.partnerFirstName} is',
+                  titleMuted: 'setting the rhythm.',
+                  index: '(003)',
+                  subtitle:
+                      'They choose the days and the time. Then both phones start reminding together.',
+                  titleSize: 40,
+                ),
                 const SizedBox(height: 26),
-                Text(
-                  '${track.partnerFirstName} is setting\nthe rhythm.',
-                  textAlign: TextAlign.center,
-                  style: text.displaySmall?.copyWith(
-                    fontSize: 36,
-                    height: 1.08,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'They’ll choose the days and the time. Then both phones start reminding together.',
-                  textAlign: TextAlign.center,
-                  style: text.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                ExpressiveCard(
-                  child: Row(
+                InkCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      VouchAvatar(
-                        name: track.partnerName ?? 'Partner',
-                        photoUrl: track.partnerPhotoUrl,
-                        size: 44,
+                      Row(
+                        children: <Widget>[
+                          VouchAvatar(
+                            name: track.partnerName ?? 'Partner',
+                            photoUrl: track.partnerPhotoUrl,
+                            size: 44,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  track.partnerName ?? 'Your partner',
+                                  style: text.titleMedium,
+                                ),
+                                Text(
+                                  'Choosing the days',
+                                  style: text.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          LetterBadge(
+                            letter: '?',
+                            color: VouchColors.lime,
+                            foreground: VouchColors.ink,
+                            size: 34,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          track.partnerName ?? 'Your partner',
-                          style: text.titleMedium,
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        onPressed: () => showContactSheet(
-                          context,
-                          name: track.partnerFirstName,
-                          phone: track.partnerPhone,
-                          message:
-                              'Hey ${track.partnerFirstName}, can you set our Vouch schedule when you get a minute?',
-                        ),
-                        icon: const Icon(Icons.chat_bubble_outline_rounded),
+                      const SizedBox(height: 16),
+                      const DashRule(),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: <Widget>[
+                          Container(
+                            width: 6,
+                            height: 6,
+                            color: VouchColors.coral,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Nothing buzzes until the rhythm is set.',
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const Spacer(),
-                if (controller.error != null)
+                const SizedBox(height: 16),
+                SoulButton(
+                  label: 'Message ${track.partnerFirstName}',
+                  compact: true,
+                  expand: false,
+                  height: 52,
+                  onPressed: () => showContactSheet(
+                    context,
+                    name: track.partnerFirstName,
+                    phone: track.partnerPhone,
+                    message:
+                        'Hey ${track.partnerFirstName}, can you set our Vouch schedule when you get a minute?',
+                  ),
+                ),
+                if (controller.error != null) ...<Widget>[
+                  const SizedBox(height: 14),
                   Text(
                     controller.error!,
                     style: text.bodySmall?.copyWith(color: scheme.error),
                   ),
+                ],
               ],
             ),
           ),
@@ -392,61 +517,93 @@ class _OwnerWaiting extends StatelessWidget {
   }
 }
 
-class _SettingTile extends StatelessWidget {
-  const _SettingTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.trailing,
+class _KindCard extends StatelessWidget {
+  const _KindCard({
+    required this.kind,
+    required this.selected,
     required this.onTap,
   });
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Widget trailing;
+  final ScheduleKind kind;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? VouchColors.cream : scheme.onSurface;
+    final accent = selected ? VouchColors.lime : VouchColors.indigo;
+    // 1 Jan 2024 was a Monday, so this walks the week from Mon to Sun.
+    final week = <DateTime>[
+      for (var i = 0; i < 7; i++) DateTime(2024, 1, 1 + i),
+    ];
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.6),
-            ),
+    return PressableSpring(
+      onTap: onTap,
+      pressedScale: 0.96,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        height: 104,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
+        decoration: BoxDecoration(
+          color: selected ? VouchColors.ink : VouchColors.cream,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? VouchColors.ink
+                : scheme.onSurface.withValues(alpha: 0.14),
+            width: 1.2,
           ),
-          child: Row(
-            children: <Widget>[
-              Icon(icon, color: VouchColors.indigo),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(title, style: text.titleMedium),
-                    Text(
-                      subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+          boxShadow: selected
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: scheme.shadow.withValues(alpha: 0.2),
+                    offset: const Offset(3, 3),
+                    blurRadius: 0,
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  for (final day in week) ...<Widget>[
+                    Container(
+                      width: 3,
+                      height: kind.includes(day)
+                          ? 22
+                          : 10,
+                      color: kind.includes(day)
+                          ? accent
+                          : fg.withValues(alpha: 0.22),
                     ),
+                    if (day != week.last) const SizedBox(width: 3),
                   ],
-                ),
+                ],
               ),
-              trailing,
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              kind.shortLabel,
+              maxLines: 1,
+              style: text.titleSmall?.copyWith(color: fg, fontSize: 13),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              '${week.where(kind.includes).length} days',
+              style: text.labelSmall?.copyWith(
+                color: fg.withValues(alpha: 0.55),
+                fontSize: 8.5,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -502,13 +659,21 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
                 final zone = zones[index];
                 final selected = zone == widget.current;
                 return ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                   selected: selected,
                   title: Text(zone.replaceAll('_', ' ')),
                   trailing: selected
-                      ? const Icon(Icons.check_rounded)
+                      ? Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: VouchColors.indigo,
+                            shape: BoxShape.circle,
+                          ),
+                        )
                       : null,
                   onTap: () => Navigator.of(context).pop(zone),
                 );
@@ -518,67 +683,12 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
           if (zones.isEmpty)
             Padding(
               padding: const EdgeInsets.all(20),
-              child: Text('No timezone matches “$_query”.', style: text.bodyMedium),
+              child: Text(
+                'No timezone matches “$_query”.',
+                style: text.bodyMedium,
+              ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-
-/// One segment of the connected schedule-pattern group.
-class _KindButton extends StatelessWidget {
-  const _KindButton({
-    required this.kind,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final ScheduleKind kind;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final icon = switch (kind) {
-      ScheduleKind.daily => Icons.calendar_view_day_rounded,
-      ScheduleKind.weekdays => Icons.work_rounded,
-      ScheduleKind.weekends => Icons.weekend_rounded,
-    };
-
-    return SizedBox(
-      height: 62,
-      child: Material(
-        color: selected
-            ? scheme.primary
-            : scheme.surfaceContainerHigh.withValues(alpha: 0.6),
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                icon,
-                size: 20,
-                color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                kind.shortLabel,
-                maxLines: 1,
-                style: text.labelMedium?.copyWith(
-                  color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-                  fontVariations: <FontVariation>[
-                    FontVariation('wght', selected ? 800 : 600),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
