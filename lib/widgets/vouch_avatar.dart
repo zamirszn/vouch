@@ -3,8 +3,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../theme/vouch_theme.dart';
-
 class VouchAvatar extends StatelessWidget {
   const VouchAvatar({
     super.key,
@@ -80,18 +78,22 @@ class VouchAvatar extends StatelessWidget {
 
     if (!ring) return avatar;
 
+    final dark = scheme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: <Color>[VouchColors.indigo, VouchColors.coral],
+        color: scheme.surface,
+        border: Border.all(
+          color: scheme.onSurface.withValues(alpha: 0.8),
+          width: 1.4,
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: VouchColors.indigo.withValues(alpha: 0.24),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: scheme.shadow.withValues(alpha: dark ? 0.5 : 0.20),
+            offset: const Offset(3, 3),
+            blurRadius: 0,
           ),
         ],
       ),

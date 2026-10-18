@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'core/constants.dart';
@@ -75,15 +76,41 @@ class _VouchAppState extends State<VouchApp> with WidgetsBindingObserver {
       ],
       child: Consumer<ThemeController>(
         builder: (context, theme, _) {
-          return MaterialApp(
-            title: VouchConfig.appName,
-            debugShowCheckedModeBanner: false,
-            theme: VouchTheme.light(),
-            darkTheme: VouchTheme.dark(),
-            themeMode: theme.mode,
-            themeAnimationDuration: const Duration(milliseconds: 320),
-            themeAnimationCurve: Curves.easeOutCubic,
-            home: const RootGate(),
+          final systemDark = WidgetsBinding
+                  .instance.platformDispatcher.platformBrightness ==
+              Brightness.dark;
+          final isDark = switch (theme.mode) {
+            ThemeMode.dark => true,
+            ThemeMode.light => false,
+            ThemeMode.system => systemDark,
+          };
+          final overlay = (isDark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark)
+              .copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarDividerColor: Colors.transparent,
+            systemNavigationBarContrastEnforced: false,
+            systemNavigationBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+          );
+
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: overlay,
+            child: MaterialApp(
+              title: VouchConfig.appName,
+              debugShowCheckedModeBanner: false,
+              theme: VouchTheme.light(),
+              darkTheme: VouchTheme.dark(),
+              themeMode: theme.mode,
+              themeAnimationDuration: const Duration(milliseconds: 320),
+              themeAnimationCurve: Curves.easeOutCubic,
+              home: const RootGate(),
+            ),
           );
         },
       ),

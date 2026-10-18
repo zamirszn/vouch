@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/vouch_theme.dart';
+import 'soul.dart';
 
 class AnimatedBackground extends StatefulWidget {
   const AnimatedBackground({
@@ -57,6 +58,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
       color: scheme.surface,
       child: Stack(
         children: <Widget>[
+          const Positioned.fill(child: PaperDots()),
           Positioned.fill(
             child: IgnorePointer(
               child: AnimatedBuilder(

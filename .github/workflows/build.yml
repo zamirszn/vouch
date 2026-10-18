@@ -1,0 +1,109 @@
+name: Build Vouch
+
+# Manual only: run it from the Actions tab → “Build Vouch” → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Artifact to build
+        type: choice
+        options:
+          - both
+          - apk
+          - aab
+        default: both
+      demo:
+        description: Build in demo mode (seeded data, no Firebase sign-in)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.6"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  build:
+    name: Build ${{ inputs.target }}
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.6"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Optional: sign with the upload keystore when the repository secrets are
+      # configured. Without them Gradle falls back to debug signing, which still
+      # produces installable artifacts.
+      - name: Configure release signing
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build APK
+        if: inputs.target == 'apk' || inputs.target == 'both'
+        run: flutter build apk --release --dart-define=VOUCH_DEMO=${{ inputs.demo }}
+
+      - name: Build App Bundle
+        if: inputs.target == 'aab' || inputs.target == 'both'
+        run: flutter build appbundle --release --dart-define=VOUCH_DEMO=${{ inputs.demo }}
+
+      - name: Upload APK
+        if: inputs.target == 'apk' || inputs.target == 'both'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vouch-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload App Bundle
+        if: inputs.target == 'aab' || inputs.target == 'both'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vouch-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

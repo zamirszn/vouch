@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/constants.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/vouch_loader.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -41,7 +42,7 @@ class SplashScreen extends StatelessWidget {
                 const SizedBox(
                   width: 30,
                   height: 30,
-                  child: CircularProgressIndicator(strokeWidth: 3),
+                  child: VouchLoader(size: 22),
                 ),
               ],
             ),

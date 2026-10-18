@@ -9,9 +9,15 @@ The owner writes what they did; the witness can call, message, or check in
 person before marking.
 
 Material 3 Expressive throughout: spring motion with
-[`motor`](https://pub.dev/packages/motor), wavy progress and expressive page
+[`motor`](https://pub.dev/packages/motor), wavy progress, shape-morphing
+loaders, connected button groups, fade-through tab switches and expressive page
 transitions from [`expressive_m3`](https://pub.dev/packages/expressive_m3),
-bold colour blocking, oversized type, and animated backgrounds.
+bold colour blocking, oversized type, floating surfaces, edge-to-edge layout,
+and an animated background.
+
+Type is set in **Bricolage Grotesque** (display, headlines, titles) paired with
+**Manrope** (body and interface labels). Both variable fonts are bundled under
+`assets/fonts/` with their OFL licences.
 
 ---
 
@@ -22,7 +28,7 @@ bold colour blocking, oversized type, and animated backgrounds.
 | App name | Vouch |
 | Android package | `com.zamirszn.vouch` |
 | Firebase project | `vouch-tracker` |
-| Firestore database | `(default)`, `europe-west1` |
+| Firestore database | `default`, `europe-west1` |
 | Flutter / Dart | 3.47.x / 3.13.x |
 | Min Android | 7.0 (API 24) |
 | Sign-in | Google Sign-In only |
@@ -30,6 +36,15 @@ bold colour blocking, oversized type, and animated backgrounds.
 Firebase config is checked in at `lib/firebase_options.dart` and
 `android/app/google-services.json` (these are not secrets). The Google web
 OAuth client ID used by `google_sign_in` lives in `lib/core/firebase_config.dart`.
+
+### Firestore database ID
+
+This project's database is named literally **`default`**, not the conventional
+`(default)` alias. Android's Firestore SDK resolves `(default)` automatically,
+so without help every query fails with `NOT_FOUND: The database (default) does
+not exist`. `FirebaseConfig.firestoreDatabaseId` is passed to
+`FirebaseFirestore.instanceFor` in `FirestoreTrackRepository` to fix this. If
+the database is ever recreated with the standard alias, drop that argument.
 
 ## Features
 
@@ -162,6 +177,19 @@ Install on a USB/Wi-Fi-debugging device:
 adb install -r dist/vouch-1.0.0.apk
 ```
 
+### GitHub Actions
+
+`.github/workflows/build.yml` is **manual only**. Open the repo's **Actions** tab,
+choose **Build Vouch → Run workflow**, then pick:
+
+- **target** — `apk`, `aab`, or `both`
+- **demo** — build with the seeded demo repository (no Firebase account)
+
+The run verifies the project (`flutter analyze`, `flutter test`) and uploads the
+release artifacts. Without signing secrets Gradle falls back to debug signing;
+add `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` as
+repository secrets to produce upload-signed builds.
+
 ## Project layout
 
 ```
@@ -182,6 +210,8 @@ tool/          brand asset generation and browser automation used during setup
 
 - Indigo `#5B4BFF`, coral `#FF6A55`, lime `#C9F27A`, cream `#FFF8F2`,
   ink `#171520`.
+- The mark is deliberately simple: one bold cream check on an indigo
+  gradient with a single coral dot as the witness.
 - Adaptive launcher icon, monochrome themed icon, Android 12 splash, and a
   white notification silhouette (`res/drawable/ic_notification.png`).
 - Brand source art lives in `assets/brand/`; regenerate icons with:

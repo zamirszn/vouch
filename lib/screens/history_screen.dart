@@ -13,6 +13,7 @@ import '../theme/vouch_theme.dart';
 import '../widgets/calendar_heatmap.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../widgets/section_header.dart';
+import '../widgets/soul.dart';
 import '../widgets/status_pill.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -76,56 +77,85 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 118),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('The record.', style: text.displaySmall),
-          const SizedBox(height: 6),
-          Text(
-            'Every day you kept your word — and every day you didn’t. No editing the past, only learning from it.',
-            style: text.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.45,
+    return TopFade(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(22, 16, 22, 118),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Asterisk(size: 11, color: scheme.secondary),
+                const SizedBox(width: 7),
+                Text(
+                  'HISTORY',
+                  style: text.labelSmall?.copyWith(
+                    color: scheme.primary,
+                    letterSpacing: 1.9,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          ExpressiveCard(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+            const SizedBox(height: 7),
+            Text(
+              'The record.',
+              style: text.displaySmall?.copyWith(
+                fontSize: 34,
+                height: 1.0,
+                letterSpacing: -0.9,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'No edits. Just the days.',
+              style: text.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            InkCard(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
             child: Column(
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    IconButton(
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              monthLabel(month),
+                              style: text.displaySmall?.copyWith(
+                                fontSize: 28,
+                                height: 1.05,
+                                letterSpacing: -0.7,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$monthKept kept · $monthMissed missed',
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    IconButton.outlined(
                       onPressed: canPrev
                           ? () => _shift(controller, -1)
                           : null,
-                      icon: const Icon(Icons.chevron_left_rounded),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 19),
                     ),
-                    Expanded(
-                      child: Column(
-                        children: <Widget>[
-                          Text(
-                            monthLabel(month),
-                            style: text.titleMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            '$monthKept kept · $monthMissed missed',
-                            style: text.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
+                    const SizedBox(width: 6),
+                    IconButton.outlined(
                       onPressed: canNext
                           ? () => _shift(controller, 1)
                           : null,
-                      icon: const Icon(Icons.chevron_right_rounded),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 19),
                     ),
                   ],
                 ),
@@ -174,70 +204,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 24),
           const SectionHeader(
+            index: '01',
             title: 'Since the beginning',
-            subtitle: 'Counted in the track’s timezone.',
           ),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _HistoryStat(
-                  value: '${stats.currentStreak}',
-                  label: 'Current streak',
-                  color: VouchColors.indigo,
+          InkCard(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: _HistoryStat(
+                    value: '${stats.currentStreak}',
+                    label: 'Current streak',
+                    color: VouchColors.indigo,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HistoryStat(
-                  value: '${stats.bestStreak}',
-                  label: 'Best streak',
-                  color: const Color(0xFF4C7A16),
+                Container(
+                  width: 1,
+                  height: 44,
+                  color: scheme.outlineVariant.withValues(alpha: 0.6),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HistoryStat(
-                  value: stats.elapsed == 0
-                      ? '—'
-                      : '${stats.completionPercent}%',
-                  label: 'Kept rate',
-                  color: VouchColors.coral,
+                Expanded(
+                  child: _HistoryStat(
+                    value: '${stats.completed}',
+                    label: 'Days kept',
+                    color: const Color(0xFF4C7A16),
+                  ),
                 ),
-              ),
-            ],
+                Container(
+                  width: 1,
+                  height: 44,
+                  color: scheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+                Expanded(
+                  child: _HistoryStat(
+                    value: stats.elapsed == 0
+                        ? '—'
+                        : '${stats.completionPercent}%',
+                    label: 'Kept rate',
+                    color: VouchColors.coral,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _HistoryStat(
-                  value: '${stats.completed}',
-                  label: 'Days kept',
-                  color: const Color(0xFF4C7A16),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HistoryStat(
-                  value: '${stats.missed}',
-                  label: 'Days missed',
-                  color: VouchColors.coral,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HistoryStat(
-                  value: '${stats.elapsed}',
-                  label: 'Days counted',
-                  color: VouchColors.indigo,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
           const SectionHeader(
+            index: '02',
             title: 'Recent days',
-            subtitle: 'Only the last 120 days are kept on this phone.',
           ),
           if (recent.isEmpty)
             ExpressiveCard(
@@ -286,7 +299,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -335,30 +349,30 @@ class _HistoryStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
+    final shown = dark ? Color.lerp(color, Colors.white, 0.42)! : color;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            value,
-            style: text.headlineSmall?.copyWith(color: color, fontSize: 25),
+    return Column(
+      children: <Widget>[
+        Text(
+          value,
+          style: text.displaySmall?.copyWith(
+            color: shown,
+            fontSize: 30,
+            height: 1,
+            letterSpacing: -0.8,
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: text.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label.toUpperCase(),
+          style: text.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            letterSpacing: 0.8,
+            fontSize: 10,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

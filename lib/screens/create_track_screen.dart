@@ -10,6 +10,7 @@ import '../state/track_controller.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/reveal.dart';
 import '../widgets/sheet_frame.dart';
+import '../widgets/vouch_loader.dart';
 
 class CreateTrackScreen extends StatefulWidget {
   const CreateTrackScreen({super.key});
@@ -103,7 +104,7 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Make it specific, daily, and small enough to do on a bad day.',
+                          'Small enough to do on a bad day.',
                           style: text.bodyLarge?.copyWith(
                             color: scheme.onSurfaceVariant,
                             height: 1.45,
@@ -157,8 +158,7 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                             labelText: 'Your phone (optional)',
                             hintText: '+234 801 234 5678',
                             prefixIcon: Icon(Icons.phone_rounded),
-                            helperText:
-                                'Lets your partner call, text or WhatsApp to confirm.',
+                            helperText: 'For call, text or WhatsApp.',
                             helperMaxLines: 2,
                           ),
                         ),
@@ -166,7 +166,7 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                         const SheetNote(
                           icon: Icons.tune_rounded,
                           text:
-                              'After you create the promise, send the invite code to your partner. They choose the days and the reminder time.',
+                              'Your partner picks the days and the reminder time.',
                         ),
                         if (_error != null) ...<Widget>[
                           const SizedBox(height: 14),
@@ -187,10 +187,7 @@ class _CreateTrackScreenState extends State<CreateTrackScreen> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      color: Colors.white,
-                                    ),
+                                    child: VouchLoader(size: 22, color: Colors.white),
                                   )
                                 : const Icon(Icons.arrow_forward_rounded),
                             label: Text(busy ? 'Creating…' : 'Create promise'),

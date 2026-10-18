@@ -9,6 +9,8 @@ import '../theme/vouch_theme.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/reveal.dart';
+import '../widgets/soul.dart';
+import '../widgets/vouch_loader.dart';
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
@@ -32,6 +34,23 @@ class AuthScreen extends StatelessWidget {
                   const Reveal(child: BrandMark(size: 76)),
                   const SizedBox(height: 26),
                   Reveal(
+                    delay: const Duration(milliseconds: 60),
+                    child: Row(
+                      children: <Widget>[
+                        Asterisk(size: 11, color: scheme.secondary),
+                        const SizedBox(width: 7),
+                        Text(
+                          'ACCOUNTABILITY, SIMPLIFIED',
+                          style: text.labelSmall?.copyWith(
+                            color: scheme.primary,
+                            letterSpacing: 1.7,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Reveal(
                     delay: const Duration(milliseconds: 80),
                     child: Text(
                       'One promise.\nOne witness.',
@@ -42,25 +61,35 @@ class AuthScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
+                  const Reveal(
+                    delay: Duration(milliseconds: 110),
+                    child: Squiggle(
+                      width: 148,
+                      height: 9,
+                      strokeWidth: 2.8,
+                      color: VouchColors.coral,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Reveal(
                     delay: const Duration(milliseconds: 140),
                     child: Text(
-                      'Vouch keeps one daily commitment in view — yours, and the person you trust to ask you about it.',
+                      'One daily promise, witnessed by someone you trust.',
                       style: text.bodyLarge?.copyWith(
                         color: scheme.onSurfaceVariant,
                         height: 1.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 34),
+                  const SizedBox(height: 30),
                   const Reveal(
                     delay: Duration(milliseconds: 200),
                     child: _FeatureRow(
                       icon: Icons.flag_rounded,
                       color: VouchColors.indigo,
                       title: 'One promise',
-                      body: 'Not a habit tracker with twelve tabs. A single thing you said you would do.',
+                      body: 'A single thing you said you would do.',
                     ),
                   ),
                   const Reveal(
@@ -69,7 +98,7 @@ class AuthScreen extends StatelessWidget {
                       icon: Icons.visibility_rounded,
                       color: VouchColors.coral,
                       title: 'One witness',
-                      body: 'Your partner sets the reminder and marks whether it happened.',
+                      body: 'Sets the reminder. Marks what happened.',
                     ),
                   ),
                   const Reveal(
@@ -78,7 +107,7 @@ class AuthScreen extends StatelessWidget {
                       icon: Icons.notifications_active_rounded,
                       color: Color(0xFF5F9E1F),
                       title: 'The same nudge',
-                      body: 'Both phones buzz together, in the track’s timezone.',
+                      body: 'Both phones buzz together.',
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -118,10 +147,7 @@ class AuthScreen extends StatelessWidget {
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.4,
-                                      color: Colors.white,
-                                    ),
+                                    child: VouchLoader(size: 22, color: Colors.white),
                                   )
                                 : Row(
                                     mainAxisAlignment:
@@ -149,24 +175,17 @@ class AuthScreen extends StatelessWidget {
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'No email, no password. Sign in with your Google account.',
-                          style: text.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 22),
                   Text(
-                    'Vouch stores your promise, notes and daily marks in Firebase so both phones stay in sync. Your phone number is optional and only shown to your partner.',
+                    'Private between you and your witness.',
                     style: text.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
                       height: 1.45,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

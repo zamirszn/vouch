@@ -62,7 +62,7 @@ class OnboardingScreen extends StatelessWidget {
                 Reveal(
                   delay: const Duration(milliseconds: 80),
                   child: Text(
-                    'One phone makes the promise. One phone keeps them honest. Pick your side.',
+                    'Pick your side.',
                     style: text.bodyLarge?.copyWith(
                       color: scheme.onSurfaceVariant,
                       height: 1.5,
@@ -87,7 +87,7 @@ class OnboardingScreen extends StatelessWidget {
                     eyebrow: 'I am the owner',
                     title: 'I’m making\na promise',
                     body:
-                        'Choose one daily thing, invite a partner, and write what you did each day.',
+                        'One daily promise. Invite a witness.',
                     icon: Icons.flag_rounded,
                   ),
                 ),
@@ -112,7 +112,7 @@ class OnboardingScreen extends StatelessWidget {
                     eyebrow: 'I am the partner',
                     title: 'I’m here\nfor someone',
                     body:
-                        'Join with an invite code, set the reminder time, and mark the day.',
+                        'Set the rhythm. Mark the days.',
                     icon: Icons.visibility_rounded,
                     outlined: true,
                   ),

@@ -15,9 +15,11 @@ import '../widgets/contact_sheet.dart';
 import '../widgets/notification_permission_card.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
+import '../widgets/soul.dart';
 import '../widgets/status_pill.dart';
 import '../widgets/vouch_avatar.dart';
 import 'schedule_setup_screen.dart';
+import '../widgets/vouch_loader.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -163,78 +165,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final roleLabel = isPartner ? 'Witness' : 'Promise owner';
     final notificationStatus = _notificationStatus;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 118),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('You.', style: text.displaySmall),
-          const SizedBox(height: 6),
-          Text(
-            'The promise, the people, and the nudges that keep it alive.',
-            style: text.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ExpressiveCard(
-            child: Row(
+    return TopFade(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(22, 16, 22, 118),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
               children: <Widget>[
-                VouchAvatar(
-                  name: auth.displayName,
-                  photoUrl: auth.photoUrl,
-                  size: 62,
-                  ring: true,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(auth.displayName, style: text.titleLarge),
-                      if (auth.email.isNotEmpty)
-                        Text(
-                          auth.email,
-                          style: text.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      StatusPill(
-                        label: roleLabel,
-                        color: isPartner
-                            ? VouchColors.coral
-                            : VouchColors.indigo,
-                        icon: isPartner
-                            ? Icons.visibility_rounded
-                            : Icons.flag_rounded,
-                        dense: true,
-                      ),
-                    ],
+                Asterisk(size: 11, color: scheme.secondary),
+                const SizedBox(width: 7),
+                Text(
+                  'YOUR VOUCH',
+                  style: text.labelSmall?.copyWith(
+                    color: scheme.primary,
+                    letterSpacing: 1.9,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          _SettingsTile(
-            icon: Icons.phone_rounded,
-            title: 'Phone number',
-            subtitle: (myPhone?.trim().isNotEmpty ?? false)
-                ? myPhone!
-                : (auth.profile?.phone?.trim().isNotEmpty ?? false)
-                    ? auth.profile!.phone!
-                    : 'Add a number so ${isPartner ? 'the owner' : 'your witness'} can reach you',
-            onTap: () => _editPhone(controller),
-            trailing: const Icon(Icons.edit_outlined, size: 20),
-          ),
-          const SizedBox(height: 26),
-          const SectionHeader(
-            title: 'The rhythm',
-            subtitle: 'When both phones get nudged.',
-          ),
-          ExpressiveCard(
+            const SizedBox(height: 7),
+            Text(
+              'You.',
+              style: text.displaySmall?.copyWith(
+                fontSize: 34,
+                height: 1.0,
+                letterSpacing: -0.9,
+              ),
+            ),
+            const SizedBox(height: 24),
+            InkCard(
+              child: Row(
+                children: <Widget>[
+                  VouchAvatar(
+                    name: auth.displayName,
+                    photoUrl: auth.photoUrl,
+                    size: 62,
+                    ring: true,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(auth.displayName, style: text.titleLarge),
+                        if (auth.email.isNotEmpty)
+                          Text(
+                            auth.email,
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        StatusPill(
+                          label: roleLabel,
+                          color: isPartner
+                              ? VouchColors.coral
+                              : VouchColors.indigo,
+                          icon: isPartner
+                              ? Icons.visibility_rounded
+                              : Icons.flag_rounded,
+                          dense: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SettingsTile(
+              icon: Icons.phone_rounded,
+              title: 'Phone number',
+              subtitle: (myPhone?.trim().isNotEmpty ?? false)
+                  ? myPhone!
+                  : (auth.profile?.phone?.trim().isNotEmpty ?? false)
+                      ? auth.profile!.phone!
+                      : 'Add a number so ${isPartner ? 'the owner' : 'your witness'} can reach you',
+              onTap: () => _editPhone(controller),
+              trailing: const Icon(Icons.edit_outlined, size: 20),
+            ),
+            const SizedBox(height: 30),
+            const SectionHeader(
+              index: '01',
+              title: 'The rhythm',
+            ),
+          InkCard(
             onTap: isPartner
                 ? () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -291,20 +307,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                   ],
                 ),
-                if (isPartner) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Text(
-                    'As the witness, only you can change the days and time.',
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 30),
           SectionHeader(
+            index: '02',
             title: 'Notifications',
             subtitle: notificationStatus == null
                 ? 'Checking this phone…'
@@ -321,30 +329,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsTile(
             icon: Icons.notification_add_outlined,
             title: 'Send a test reminder',
-            subtitle: 'See exactly what both phones will show.',
+            subtitle: null,
             onTap: _testing ? null : () => _sendTest(controller),
             trailing: _testing
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: VouchLoader(size: 22),
                   )
                 : const Icon(Icons.chevron_right_rounded),
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Reminders are scheduled on each phone for the next 60 days. If the time changes, the other phone picks it up the next time Vouch opens.',
-            style: text.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 30),
           SectionHeader(
+            index: '03',
             title: isPartner ? 'The promise owner' : 'Your witness',
-            subtitle: 'Reach them to confirm a day.',
           ),
-          ExpressiveCard(
+          InkCard(
             child: Row(
               children: <Widget>[
                 VouchAvatar(
@@ -384,7 +384,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 26),
-          const SectionHeader(title: 'Appearance'),
+          const SectionHeader(index: '04', title: 'Appearance'),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -416,10 +416,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           if (controller.isDemo) ...<Widget>[
-            const SizedBox(height: 26),
+            const SizedBox(height: 30),
             const SectionHeader(
+              index: '05',
               title: 'Demo preview',
-              subtitle: 'Switch sides without signing in.',
             ),
             Wrap(
               spacing: 8,
@@ -444,7 +444,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingsTile(
               icon: Icons.logout_rounded,
               title: 'Sign out',
-              subtitle: 'You can sign back in with Google.',
+              subtitle: null,
               onTap: _signOut,
               tint: scheme.onSurfaceVariant,
             ),
@@ -454,32 +454,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: isPartner ? Icons.exit_to_app_rounded : Icons.stop_circle_outlined,
             title: isPartner ? 'Leave as witness' : 'End this promise',
             subtitle: isPartner
-                ? 'Stop witnessing. The owner keeps their record.'
-                : 'End it for both of you and start fresh.',
+                ? 'Stop witnessing. Their record stays.'
+                : 'End it for both of you.',
             onTap: () => _endOrLeave(controller),
             tint: scheme.error,
           ),
           const SizedBox(height: 26),
           Center(
-            child: Column(
-              children: <Widget>[
-                Text(
-                  VouchConfig.appName,
-                  style: text.labelMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Version 1.0.0 · ${VouchConfig.tagline}',
-                  style: text.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
+            child: Text(
+              '${VouchConfig.appName} 1.0.0',
+              style: text.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -489,7 +480,7 @@ class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     required this.onTap,
     this.trailing,
     this.tint,
@@ -497,7 +488,7 @@ class _SettingsTile extends StatelessWidget {
 
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget? trailing;
   final Color? tint;
@@ -539,13 +530,15 @@ class _SettingsTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(title, style: text.titleSmall),
-                    const SizedBox(height: 1),
-                    Text(
-                      subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    if (subtitle != null) ...<Widget>[
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle!,
+                        style: text.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -643,7 +636,7 @@ class _PhoneSheetState extends State<_PhoneSheet> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: VouchLoader(size: 22),
                     )
                   : const Text('Save number'),
             ),

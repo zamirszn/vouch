@@ -89,8 +89,8 @@ class _NotificationPermissionCardState
                 const SizedBox(height: 3),
                 Text(
                   exactOnly
-                      ? 'Android may deliver reminders a little late until exact alarms are allowed for Vouch.'
-                      : 'Both you and your partner get a nudge at the chosen time. Android needs permission first.',
+                      ? 'Android may deliver reminders late until exact alarms are allowed.'
+                      : 'Android needs permission before Vouch can nudge you.',
                   style: text.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

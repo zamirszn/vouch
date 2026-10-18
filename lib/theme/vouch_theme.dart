@@ -41,7 +41,7 @@ class VouchTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
       canvasColor: scheme.surface,
-      fontFamily: 'RobotoFlex',
+      fontFamily: 'Manrope',
       textTheme: text,
       primaryTextTheme: text,
       splashFactory: InkSparkle.splashFactory,
@@ -65,24 +65,45 @@ class VouchTheme {
         elevation: 0,
         color: scheme.surfaceContainerHigh,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: VouchShapes.card),
+        shape: RoundedRectangleBorder(
+          borderRadius: VouchShapes.card,
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.45),
+          ),
+        ),
         clipBehavior: Clip.antiAlias,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 56),
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
+          backgroundColor: isDark ? VouchColors.cream : scheme.primary,
+          foregroundColor: isDark ? VouchColors.ink : scheme.onPrimary,
+          minimumSize: const Size(64, 58),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 17),
           shape: const StadiumBorder(),
-          textStyle: text.labelLarge?.copyWith(fontSize: 16),
+          textStyle: text.labelLarge?.copyWith(
+            fontFamily: 'Bricolage',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontVariations: const <FontVariation>[
+              FontVariation('wght', 600),
+            ],
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(64, 56),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          minimumSize: const Size(64, 58),
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 17),
           shape: const StadiumBorder(),
           side: BorderSide(color: scheme.outlineVariant, width: 1.4),
-          textStyle: text.labelLarge?.copyWith(fontSize: 16),
+          textStyle: text.labelLarge?.copyWith(
+            fontFamily: 'Bricolage',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontVariations: const <FontVariation>[
+              FontVariation('wght', 600),
+            ],
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -130,9 +151,27 @@ class VouchTheme {
       chipTheme: ChipThemeData(
         shape: const StadiumBorder(),
         side: BorderSide.none,
-        backgroundColor: scheme.surfaceContainerHighest,
-        labelStyle: text.labelLarge,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.7),
+        selectedColor: scheme.primaryContainer,
+        showCheckmark: false,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        labelStyle: text.labelLarge?.copyWith(
+          fontFamily: 'Bricolage',
+          fontWeight: FontWeight.w600,
+          fontVariations: const <FontVariation>[FontVariation('wght', 600)],
+          color: scheme.onSurfaceVariant,
+        ),
+        secondaryLabelStyle: text.labelLarge?.copyWith(
+          fontFamily: 'Bricolage',
+          fontWeight: FontWeight.w700,
+          fontVariations: const <FontVariation>[FontVariation('wght', 700)],
+          color: scheme.onPrimaryContainer,
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+        iconColor: scheme.onSurfaceVariant,
       ),
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant.withValues(alpha: 0.6),
@@ -162,16 +201,27 @@ class VouchTheme {
         clipBehavior: Clip.antiAlias,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
+        height: 72,
         elevation: 0,
-        backgroundColor: scheme.surfaceContainer,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         indicatorColor: scheme.primaryContainer,
-        labelTextStyle: WidgetStatePropertyAll(text.labelMedium),
+        indicatorShape: const StadiumBorder(),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return text.labelMedium?.copyWith(
+            color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
+            fontVariations: <FontVariation>[
+              FontVariation('wght', selected ? 800 : 600),
+            ],
+          );
+        }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
             color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
-            size: 26,
+            size: selected ? 26 : 24,
           );
         }),
       ),
@@ -280,38 +330,74 @@ class VouchTheme {
   }
 
   static TextTheme _textTheme(ColorScheme scheme) {
-    TextStyle style(
+    // Bricolage Grotesque carries the expressive voice — display, headlines,
+    // titles and pill labels. Manrope keeps body copy calm and legible. Both
+    // are variable fonts, so weight is set on the `wght` axis rather than
+    // relying on synthetic bolding.
+    TextStyle display(
       double size,
       FontWeight weight, {
-      double height = 1.15,
-      double tracking = 0,
+      double height = 1.05,
+      double tracking = -0.6,
+      double optical = 40,
     }) {
       return TextStyle(
-        fontFamily: 'RobotoFlex',
+        fontFamily: 'Bricolage',
         fontSize: size,
         fontWeight: weight,
         height: height,
         letterSpacing: tracking,
+        fontVariations: <FontVariation>[
+          FontVariation('wght', weight.value.toDouble()),
+          FontVariation('opsz', optical),
+          FontVariation('wdth', 100),
+        ],
+        color: scheme.onSurface,
+      );
+    }
+
+    TextStyle body(
+      double size,
+      FontWeight weight, {
+      double height = 1.45,
+      double tracking = 0,
+    }) {
+      return TextStyle(
+        fontFamily: 'Manrope',
+        fontSize: size,
+        fontWeight: weight,
+        height: height,
+        letterSpacing: tracking,
+        fontVariations: <FontVariation>[
+          FontVariation('wght', weight.value.toDouble()),
+        ],
         color: scheme.onSurface,
       );
     }
 
     return TextTheme(
-      displayLarge: style(62, FontWeight.w600, height: 1.02, tracking: -1.8),
-      displayMedium: style(48, FontWeight.w600, height: 1.04, tracking: -1.2),
-      displaySmall: style(38, FontWeight.w600, height: 1.08, tracking: -0.8),
-      headlineLarge: style(34, FontWeight.w700, height: 1.1, tracking: -0.5),
-      headlineMedium: style(29, FontWeight.w700, height: 1.12, tracking: -0.3),
-      headlineSmall: style(25, FontWeight.w700, height: 1.16),
-      titleLarge: style(22, FontWeight.w700, height: 1.2),
-      titleMedium: style(17, FontWeight.w700, height: 1.25),
-      titleSmall: style(15, FontWeight.w700, height: 1.3),
-      bodyLarge: style(17, FontWeight.w400, height: 1.42),
-      bodyMedium: style(15, FontWeight.w400, height: 1.42),
-      bodySmall: style(13, FontWeight.w400, height: 1.38),
-      labelLarge: style(15, FontWeight.w700, height: 1.2, tracking: 0.2),
-      labelMedium: style(13, FontWeight.w700, height: 1.2, tracking: 0.3),
-      labelSmall: style(11, FontWeight.w700, height: 1.2, tracking: 0.4),
+      displayLarge:
+          display(64, FontWeight.w700, height: 1.0, tracking: -2.2, optical: 72),
+      displayMedium:
+          display(50, FontWeight.w700, height: 1.02, tracking: -1.6, optical: 60),
+      displaySmall:
+          display(39, FontWeight.w700, height: 1.06, tracking: -1.1, optical: 48),
+      headlineLarge:
+          display(34, FontWeight.w700, height: 1.1, tracking: -0.7, optical: 36),
+      headlineMedium:
+          display(28, FontWeight.w700, height: 1.12, tracking: -0.5, optical: 32),
+      headlineSmall:
+          display(24, FontWeight.w700, height: 1.16, tracking: -0.3, optical: 28),
+      titleLarge: display(21, FontWeight.w600, height: 1.2, tracking: -0.2,
+          optical: 24),
+      titleMedium: display(17, FontWeight.w600, height: 1.25, optical: 20),
+      titleSmall: display(15, FontWeight.w600, height: 1.3, optical: 18),
+      bodyLarge: body(17, FontWeight.w400, height: 1.48),
+      bodyMedium: body(15, FontWeight.w400, height: 1.46),
+      bodySmall: body(13, FontWeight.w500, height: 1.4),
+      labelLarge: body(15, FontWeight.w700, height: 1.2, tracking: 0.1),
+      labelMedium: body(13, FontWeight.w700, height: 1.2, tracking: 0.2),
+      labelSmall: body(11, FontWeight.w700, height: 1.2, tracking: 0.3),
     );
   }
 }

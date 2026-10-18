@@ -17,6 +17,7 @@ import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
 import '../widgets/vouch_avatar.dart';
+import '../widgets/vouch_loader.dart';
 
 class WaitingScreen extends StatefulWidget {
   const WaitingScreen({super.key});
@@ -73,7 +74,7 @@ class _WaitingScreenState extends State<WaitingScreen> {
 
     if (track == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: VouchLoader(size: 22)),
       );
     }
 
@@ -117,7 +118,7 @@ class _WaitingScreenState extends State<WaitingScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Send this code to the one person who will keep you honest. The app switches on the moment they join.',
+                  'Send this to your witness. Vouch switches on when they join.',
                   style: text.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     height: 1.5,
@@ -208,30 +209,26 @@ class _WaitingScreenState extends State<WaitingScreen> {
                   ),
                 ),
                 const SizedBox(height: 26),
-                const SectionHeader(title: 'While you wait'),
+                const SectionHeader(index: '01', title: 'While you wait'),
                 const _WaitingRow(
                   icon: Icons.person_search_rounded,
                   title: 'They join with the code',
-                  subtitle:
-                      'No account hunting, no email invites. One code, one witness.',
+                  subtitle: 'One code, one witness.',
                 ),
                 const _WaitingRow(
                   icon: Icons.tune_rounded,
                   title: 'They choose the rhythm',
-                  subtitle:
-                      'Days, time and timezone are theirs to set — you both get nudged together.',
+                  subtitle: 'Days and time. You both get nudged.',
                 ),
                 const _WaitingRow(
                   icon: Icons.check_circle_outline_rounded,
                   title: 'They mark, you write',
-                  subtitle:
-                      'You record what you did. They confirm it and mark the day.',
+                  subtitle: 'You record it. They confirm.',
                 ),
                 const SizedBox(height: 20),
                 const SheetNote(
                   icon: Icons.lock_outline_rounded,
-                  text:
-                      'The invite is a one-time key. Once someone joins, the code stops working.',
+                  text: 'One-time key. It stops working once someone joins.',
                 ),
                 const SizedBox(height: 18),
                 Row(
@@ -244,7 +241,7 @@ class _WaitingScreenState extends State<WaitingScreen> {
                                 width: 18,
                                 height: 18,
                                 child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                    VouchLoader(size: 22),
                               )
                             : const Icon(Icons.refresh_rounded),
                         label: const Text('New code'),

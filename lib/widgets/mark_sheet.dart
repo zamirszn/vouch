@@ -11,6 +11,7 @@ import '../services/contact_service.dart';
 import '../theme/vouch_theme.dart';
 import 'pressable_spring.dart';
 import 'sheet_frame.dart';
+import 'vouch_loader.dart';
 
 Future<DayStatus?> showMarkSheet(
   BuildContext context, {
@@ -179,7 +180,7 @@ class _MarkSheetState extends State<MarkSheet> {
           if (!hasPhone) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              'No phone number on file for ${widget.ownerName}. You can still confirm in person.',
+              'No number for ${widget.ownerName}. Confirm in person.',
               style: text.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -261,8 +262,7 @@ class _MarkSheetState extends State<MarkSheet> {
           const SizedBox(height: 4),
           const SheetNote(
             icon: Icons.handshake_outlined,
-            text:
-                'Marking is a witness, not a punishment. If today went sideways, say so and start again tomorrow.',
+            text: 'A witness, not a judge. Say what happened.',
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -279,10 +279,7 @@ class _MarkSheetState extends State<MarkSheet> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        color: Colors.white,
-                      ),
+                      child: VouchLoader(size: 22, color: Colors.white),
                     )
                   : Icon(
                       _status == DayStatus.completed

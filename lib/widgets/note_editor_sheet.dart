@@ -7,6 +7,7 @@ import '../core/constants.dart';
 import '../theme/vouch_theme.dart';
 import 'section_header.dart';
 import 'sheet_frame.dart';
+import 'vouch_loader.dart';
 
 Future<bool?> showNoteEditorSheet(
   BuildContext context, {
@@ -107,7 +108,7 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
           const SheetNote(
             icon: Icons.visibility_outlined,
             text:
-                'Your partner sees this note. Honesty beats a perfect record — you can edit it until they mark the day.',
+                'Your witness sees this. You can edit until they mark the day.',
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -118,7 +119,7 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.4),
+                      child: VouchLoader(size: 22),
                     )
                   : Text(
                       widget.initialNote == null ||

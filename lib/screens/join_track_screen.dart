@@ -13,6 +13,7 @@ import '../widgets/animated_background.dart';
 import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
 import '../widgets/vouch_avatar.dart';
+import '../widgets/vouch_loader.dart';
 
 class JoinTrackScreen extends StatefulWidget {
   const JoinTrackScreen({super.key});
@@ -140,7 +141,7 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ask the person you’re supporting for their Vouch invite. It is 8 characters, like DEMO2026.',
+                  'Enter the 8-character code from your person.',
                   style: text.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     height: 1.45,
@@ -183,7 +184,7 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: VouchLoader(size: 22),
                           )
                         : const Icon(Icons.search_rounded),
                     label: Text(_looking ? 'Looking…' : 'Find the promise'),
@@ -209,8 +210,8 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                 if (preview != null) ...<Widget>[
                   const SizedBox(height: 28),
                   const SectionHeader(
+                    index: '01',
                     title: 'Is this them?',
-                    subtitle: 'Check the name and the promise before joining.',
                   ),
                   ExpressiveCard(
                     color: scheme.primaryContainer.withValues(alpha: 0.55),
@@ -272,10 +273,7 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
+                                    child: VouchLoader(size: 22, color: Colors.white),
                                   )
                                 : const Icon(Icons.handshake_rounded),
                             label: Text(
@@ -284,14 +282,6 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Next you’ll choose which days count and what time both phones get nudged.',
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      height: 1.45,
                     ),
                   ),
                 ],

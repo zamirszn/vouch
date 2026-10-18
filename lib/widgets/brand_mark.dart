@@ -78,7 +78,7 @@ class _BrandMarkState extends State<BrandMark>
                   )
                 : null,
             child: ShapeClip(
-              shape: ExpressiveShape.cookie,
+              shape: ExpressiveShape.cookie4Sided,
               from: ExpressiveShape.circle,
               t: morph,
               child: DecoratedBox(
@@ -89,12 +89,28 @@ class _BrandMarkState extends State<BrandMark>
                     colors: <Color>[VouchColors.indigo, Color(0xFF2A1E7A)],
                   ),
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.check_rounded,
-                    color: VouchColors.cream,
-                    size: widget.size * 0.52,
-                  ),
+                child: Stack(
+                  children: <Widget>[
+                    Positioned(
+                      top: widget.size * 0.17,
+                      right: widget.size * 0.20,
+                      child: Container(
+                        width: widget.size * 0.115,
+                        height: widget.size * 0.115,
+                        decoration: const BoxDecoration(
+                          color: VouchColors.coral,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: VouchColors.cream,
+                        size: widget.size * 0.50,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

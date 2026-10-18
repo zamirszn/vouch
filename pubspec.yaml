@@ -75,9 +75,12 @@ flutter:
     - assets/brand/
 
   fonts:
-    - family: RobotoFlex
+    - family: Manrope
       fonts:
-        - asset: assets/fonts/RobotoFlex.ttf
+        - asset: assets/fonts/Manrope.ttf
+    - family: Bricolage
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque.ttf
 
 flutter_launcher_icons:
   android: true

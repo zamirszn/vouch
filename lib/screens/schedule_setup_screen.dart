@@ -1,6 +1,7 @@
 /// The partner chooses days, time and timezone; the owner sees a waiting state.
 library;
 
+import 'package:expressive_m3/expressive_m3.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
@@ -19,6 +20,7 @@ import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
 import '../widgets/vouch_avatar.dart';
+import '../widgets/vouch_loader.dart';
 
 class ScheduleSetupScreen extends StatefulWidget {
   const ScheduleSetupScreen({super.key});
@@ -117,7 +119,7 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
     final track = controller.track;
     if (track == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: VouchLoader(size: 22)),
       );
     }
     if (!controller.isPartner) {
@@ -168,7 +170,7 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'You are the witness for ${track.ownerFirstName}. Both phones will be nudged at the same moment.',
+                  'Witnessing ${track.ownerFirstName}’s promise. Both phones buzz together.',
                   style: text.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     height: 1.45,
@@ -200,31 +202,22 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                 ),
                 const SizedBox(height: 26),
                 const SectionHeader(
+                  index: '01',
                   title: 'Which days?',
-                  subtitle: 'Only these days count toward the streak.',
                 ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                ExpressiveButtonGroup(
+                  expanded: true,
                   children: <Widget>[
                     for (final kind in ScheduleKind.values)
-                      ChoiceChip(
+                      _KindButton(
+                        kind: kind,
                         selected: _kind == kind,
-                        onSelected: (_) => setState(() => _kind = kind),
-                        label: Text(kind.label),
-                        avatar: Icon(
-                          switch (kind) {
-                            ScheduleKind.daily => Icons.calendar_view_day_rounded,
-                            ScheduleKind.weekdays => Icons.work_rounded,
-                            ScheduleKind.weekends => Icons.weekend_rounded,
-                          },
-                          size: 18,
-                        ),
+                        onTap: () => setState(() => _kind = kind),
                       ),
                   ],
                 ),
                 const SizedBox(height: 26),
-                const SectionHeader(title: 'What time?'),
+                const SectionHeader(index: '02', title: 'What time?'),
                 _SettingTile(
                   icon: Icons.schedule_rounded,
                   title: _time.format(context),
@@ -267,7 +260,7 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'Both phones schedule locally in ${_timeZone.replaceAll('_', ' ')}. The owner’s phone updates when they next open Vouch.',
+                              'Scheduled in ${_timeZone.replaceAll('_', ' ')}.',
                               style: text.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
                                 height: 1.4,
@@ -296,10 +289,7 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.2,
-                              color: Colors.white,
-                            ),
+                            child: VouchLoader(size: 22, color: Colors.white),
                           )
                         : const Icon(Icons.bolt_rounded),
                     label: Text(
@@ -308,15 +298,6 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                           : track.schedule == null
                               ? 'Activate the promise'
                               : 'Update the schedule',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    'You can change this later in Settings.',
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -540,6 +521,64 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
               child: Text('No timezone matches “$_query”.', style: text.bodyMedium),
             ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// One segment of the connected schedule-pattern group.
+class _KindButton extends StatelessWidget {
+  const _KindButton({
+    required this.kind,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ScheduleKind kind;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final icon = switch (kind) {
+      ScheduleKind.daily => Icons.calendar_view_day_rounded,
+      ScheduleKind.weekdays => Icons.work_rounded,
+      ScheduleKind.weekends => Icons.weekend_rounded,
+    };
+
+    return SizedBox(
+      height: 62,
+      child: Material(
+        color: selected
+            ? scheme.primary
+            : scheme.surfaceContainerHigh.withValues(alpha: 0.6),
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 20,
+                color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                kind.shortLabel,
+                maxLines: 1,
+                style: text.labelMedium?.copyWith(
+                  color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+                  fontVariations: <FontVariation>[
+                    FontVariation('wght', selected ? 800 : 600),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ library;
 
 import 'dart:async';
 
+import 'package:expressive_m3/expressive_m3.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -24,10 +25,13 @@ import '../widgets/promise_orb.dart';
 import '../widgets/reveal.dart';
 import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
+import '../widgets/soul.dart';
 import '../widgets/status_pill.dart';
 import '../widgets/vouch_avatar.dart';
+import '../widgets/vouch_dock.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/vouch_loader.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -37,7 +41,6 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  final PageController _pages = PageController();
   StreamSubscription<String>? _taps;
   int _index = 0;
 
@@ -53,27 +56,12 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void dispose() {
     _taps?.cancel();
-    _pages.dispose();
     super.dispose();
   }
 
   void _select(int index) {
-    if (index == _index) {
-      if (_pages.hasClients) {
-        _pages.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        );
-      }
-      return;
-    }
+    if (index == _index) return;
     setState(() => _index = index);
-    _pages.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
-    );
   }
 
   @override
@@ -86,37 +74,22 @@ class _HomeShellState extends State<HomeShell> {
       body: AnimatedBackground(
         child: SafeArea(
           bottom: false,
-          child: PageView(
-            controller: _pages,
-            onPageChanged: (index) => setState(() => _index = index),
-            children: <Widget>[
-              isPartner ? const _PartnerHome() : const _OwnerHome(),
-              const HistoryScreen(),
-              const SettingsScreen(),
-            ],
+          child: TabSwitchTransition(
+            index: _index,
+            child: IndexedStack(
+              index: _index,
+              children: <Widget>[
+                isPartner ? const _PartnerHome() : const _OwnerHome(),
+                const HistoryScreen(),
+                const SettingsScreen(),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: _select,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(Icons.bolt_outlined),
-            selectedIcon: Icon(Icons.bolt_rounded),
-            label: 'Today',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month_rounded),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'You',
-          ),
-        ],
+      bottomNavigationBar: VouchDock(
+        index: _index,
+        onSelected: _select,
       ),
     );
   }
@@ -133,64 +106,182 @@ class _PagePadding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 118),
-      child: child,
+    return TopFade(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          22,
+          16,
+          22,
+          108 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: child,
+      ),
     );
   }
 }
 
-class _GreetingRow extends StatelessWidget {
-  const _GreetingRow({
+class _Masthead extends StatelessWidget {
+  const _Masthead({
     required this.eyebrow,
-    required this.title,
     required this.name,
-    required this.photoUrl,
+    required this.date,
+    this.photoUrl,
   });
 
   final String eyebrow;
-  final String title;
   final String name;
+  final DateTime date;
   final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Asterisk(size: 11, color: scheme.secondary),
+                  const SizedBox(width: 7),
+                  Text(
+                    eyebrow.toUpperCase(),
+                    style: text.labelSmall?.copyWith(
+                      color: scheme.primary,
+                      letterSpacing: 1.9,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 7),
               Text(
-                eyebrow.toUpperCase(),
-                style: text.labelSmall?.copyWith(
-                  color: VouchColors.indigo,
-                  letterSpacing: 1.3,
+                name,
+                style: text.displaySmall?.copyWith(
+                  fontSize: 34,
+                  height: 1.0,
+                  letterSpacing: -0.9,
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(title, style: text.headlineSmall),
-              if (name.isNotEmpty)
-                Text(
-                  name,
-                  style: text.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              const SizedBox(height: 5),
+              Text(
+                DateFormat('EEEE d MMMM').format(date).toUpperCase(),
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 1.1,
                 ),
+              ),
             ],
           ),
         ),
-        VouchAvatar(name: name, photoUrl: photoUrl, size: 46, ring: true),
+        const SizedBox(width: 12),
+        Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            Transform.rotate(
+              angle: 0.05,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: scheme.onSurface.withValues(alpha: 0.8),
+                    width: 1.4,
+                  ),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: scheme.shadow.withValues(
+                        alpha: dark ? 0.5 : 0.20,
+                      ),
+                      offset: const Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: VouchAvatar(
+                  name: name,
+                  photoUrl: photoUrl,
+                  size: 46,
+                ),
+              ),
+            ),
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 13,
+                height: 13,
+                decoration: BoxDecoration(
+                  color: VouchColors.coral,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: scheme.surface, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({required this.controller});
+
+  final TrackController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = controller.stats;
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget divider() => Container(
+          width: 1,
+          height: 44,
+          color: scheme.outlineVariant.withValues(alpha: 0.6),
+        );
+
+    return InkCard(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: _StatCell(
+              label: 'Best streak',
+              value: '${stats.bestStreak}',
+              color: VouchColors.indigo,
+            ),
+          ),
+          divider(),
+          Expanded(
+            child: _StatCell(
+              label: 'Days kept',
+              value: '${stats.completed}',
+              color: const Color(0xFF4C7A16),
+            ),
+          ),
+          divider(),
+          Expanded(
+            child: _StatCell(
+              label: 'Kept rate',
+              value: stats.elapsed == 0 ? '—' : '${stats.completionPercent}%',
+              color: VouchColors.coral,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  const _StatCell({
     required this.label,
     required this.value,
     required this.color,
@@ -204,65 +295,27 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final shown = isDark ? Color.lerp(color, Colors.white, 0.42)! : color;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            value,
-            style: text.headlineSmall?.copyWith(color: color, fontSize: 26),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: text.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.controller});
-
-  final TrackController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = controller.stats;
-    return Row(
+    return Column(
       children: <Widget>[
-        Expanded(
-          child: _StatTile(
-            label: 'Best streak',
-            value: '${stats.bestStreak}',
-            color: VouchColors.indigo,
+        Text(
+          value,
+          style: text.displaySmall?.copyWith(
+            color: shown,
+            fontSize: 30,
+            height: 1,
+            letterSpacing: -0.8,
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            label: 'Days kept',
-            value: '${stats.completed}',
-            color: const Color(0xFF4C7A16),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            label: 'Kept rate',
-            value: stats.elapsed == 0 ? '—' : '${stats.completionPercent}%',
-            color: VouchColors.coral,
+        const SizedBox(height: 6),
+        Text(
+          label.toUpperCase(),
+          style: text.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            letterSpacing: 0.8,
+            fontSize: 10,
           ),
         ),
       ],
@@ -404,8 +457,12 @@ class _ContactAction extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: enabled ? 0.14 : 0.06),
+                  color: color.withValues(alpha: enabled ? 0.12 : 0.05),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: color.withValues(alpha: enabled ? 0.34 : 0.10),
+                    width: 1.2,
+                  ),
                 ),
                 child: Icon(
                   icon,
@@ -430,8 +487,8 @@ class _ContactAction extends StatelessWidget {
   }
 }
 
-class _ReminderCard extends StatelessWidget {
-  const _ReminderCard({required this.controller});
+class _ReminderLine extends StatelessWidget {
+  const _ReminderLine({required this.controller});
 
   final TrackController controller;
 
@@ -443,53 +500,105 @@ class _ReminderCard extends StatelessWidget {
     final next = controller.nextReminder;
     final remaining = controller.timeToNextReminder;
 
-    return ExpressiveCard(
-      color: VouchColors.indigo.withValues(alpha: 0.08),
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: VouchColors.indigo.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(
-              Icons.notifications_active_rounded,
-              color: VouchColors.indigo,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  schedule == null
-                      ? 'No reminder set'
-                      : '${schedule.kind.label} · ${schedule.clockLabel}',
-                  style: text.titleMedium,
+    final label = schedule == null
+        ? 'No reminder set'
+        : next == null
+            ? 'No upcoming reminder'
+            : 'Next buzz · ${DateFormat('EEE d MMM · h:mm a').format(next)}';
+
+    return Column(
+      children: <Widget>[
+        const DashRule(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                Icons.notifications_none_rounded,
+                size: 19,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 2),
+              ),
+              if (remaining != null)
                 Text(
-                  next == null || remaining == null
-                      ? 'Both phones buzz together once a schedule is set.'
-                      : 'Next ${DateFormat('EEE d MMM').format(next)} · ${countdownLabel(remaining)}',
-                  style: text.bodySmall?.copyWith(
+                  countdownLabel(remaining),
+                  style: text.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-              ],
+            ],
+          ),
+        ),
+        const DashRule(),
+      ],
+    );
+  }
+}
+
+class _PromiseHero extends StatelessWidget {
+  const _PromiseHero({required this.track});
+
+  final Track track;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
+    return InkCard(
+      color: VouchColors.indigo,
+      borderColor: const Color(0xFF241765),
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          Positioned(
+            right: -34,
+            top: -26,
+            child: Asterisk(
+              size: 130,
+              strokeWidth: 9,
+              color: Colors.white.withValues(alpha: 0.08),
             ),
           ),
-          if (schedule != null)
-            Text(
-              schedule.zoneLabel,
-              style: text.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Sticker(
+                'The promise',
+                color: VouchColors.lime,
+                foreground: VouchColors.ink,
+                rotation: -0.05,
               ),
-            ),
+              const SizedBox(height: 18),
+              Text(
+                track.promise,
+                style: text.displaySmall?.copyWith(
+                  color: VouchColors.cream,
+                  fontSize: 34,
+                  height: 1.06,
+                  letterSpacing: -0.9,
+                ),
+              ),
+              if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
+                const SizedBox(height: 10),
+                Text(
+                  '“${track.promiseNote!.trim()}”',
+                  style: text.bodyMedium?.copyWith(
+                    color: VouchColors.cream.withValues(alpha: 0.78),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -549,14 +658,13 @@ class _OwnerHomeState extends State<_OwnerHome> {
     final controller = context.watch<TrackController>();
     final track = controller.track;
     if (track == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: VouchLoader());
     }
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final state = controller.dayState(controller.today);
     final entry = controller.todayEntry;
     final stats = controller.stats;
-    final hour = nowIn(track.schedule?.timeZone).hour;
     final partner = track.partnerName ?? 'Your partner';
 
     final caption = switch (state) {
@@ -571,34 +679,41 @@ class _OwnerHomeState extends State<_OwnerHome> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _GreetingRow(
-            eyebrow: greetingForHour(hour),
-            title: track.ownerFirstName,
-            name: 'Vouch · one promise',
+          _Masthead(
+            eyebrow: 'Keeping',
+            name: track.ownerFirstName,
+            date: controller.today,
             photoUrl: track.ownerPhotoUrl,
           ),
           const SizedBox(height: 26),
           Reveal(
-            child: Text(
-              track.promise,
-              style: text.displaySmall?.copyWith(
-                fontSize: 34,
-                height: 1.09,
-                letterSpacing: -0.8,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  track.promise,
+                  style: text.displaySmall?.copyWith(
+                    fontSize: 36,
+                    height: 1.06,
+                    letterSpacing: -1.0,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Squiggle(width: 96, color: VouchColors.coral),
+                if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text(
+                    '“${track.promiseNote!.trim()}”',
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              '“${track.promiseNote!.trim()}”',
-              style: text.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
-          ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
           Center(
             child: PromiseOrb(
               state: state,
@@ -608,14 +723,17 @@ class _OwnerHomeState extends State<_OwnerHome> {
               size: 238,
             ),
           ),
-          const SizedBox(height: 18),
-          _ReminderCard(controller: controller),
+          const SizedBox(height: 14),
+          _ReminderLine(controller: controller),
           const SizedBox(height: 12),
           const NotificationPermissionCard(),
-          const SizedBox(height: 26),
+          const SizedBox(height: 30),
           SectionHeader(
-            title: 'What I did today',
-            subtitle: 'Write it before ${track.partnerFirstName} checks in.',
+            index: '01',
+            title: 'Today’s note',
+            subtitle: entry?.hasNote ?? false
+                ? null
+                : 'Write it before ${track.partnerFirstName} checks in.',
             trailing: entry?.hasNote ?? false
                 ? TextButton(
                     onPressed: () => _editNote(controller, track),
@@ -623,31 +741,26 @@ class _OwnerHomeState extends State<_OwnerHome> {
                   )
                 : null,
           ),
-          if (state == VouchDayState.rest)
+          if (state == VouchDayState.rest && !(entry?.hasNote ?? false))
             const _NoteCallout(
               child: SheetNote(
                 icon: Icons.self_improvement_rounded,
-                text:
-                    'No promise is scheduled today. You can still add a note if you did it anyway.',
+                text: 'No promise today. Add a note if you did it anyway.',
               ),
             ),
           if (entry?.hasNote ?? false)
             NotePreview(note: entry?.note)
           else
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _editNote(controller, track),
-                icon: const Icon(Icons.edit_note_rounded, size: 22),
-                label: const Text('Write today’s note'),
-              ),
+            SoulButton(
+              label: 'Write today’s note',
+              icon: Icons.edit_note_rounded,
+              onPressed: () => _editNote(controller, track),
             ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 30),
           SectionHeader(
+            index: '02',
             title: 'Witness',
-            subtitle: entry?.isMarked ?? false
-                ? 'Today is settled.'
-                : '${track.partnerFirstName} has the final word.',
+            subtitle: (entry?.isMarked ?? false) ? 'Settled.' : null,
           ),
           _WitnessStatus(
             controller: controller,
@@ -704,8 +817,8 @@ class _OwnerHomeState extends State<_OwnerHome> {
           ),
           const SizedBox(height: 26),
           const SectionHeader(
+            index: '03',
             title: 'This week',
-            subtitle: 'Tap a day to see the full story.',
           ),
           ExpressiveCard(
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
@@ -799,8 +912,8 @@ class _WitnessStatus extends StatelessWidget {
                 Text(
                   !marked
                       ? (state == VouchDayState.rest
-                          ? 'No mark needed on a rest day.'
-                          : 'Hasn’t marked today yet. They may call or message first.')
+                          ? 'No mark needed today.'
+                          : 'Waiting on their mark.')
                       : <String?>[
                           entry?.method?.label,
                           entry?.markedAt == null
@@ -872,7 +985,7 @@ class _PartnerHome extends StatelessWidget {
     final controller = context.watch<TrackController>();
     final track = controller.track;
     if (track == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: VouchLoader());
     }
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
@@ -880,7 +993,6 @@ class _PartnerHome extends StatelessWidget {
     final state = controller.dayState(controller.today);
     final marked = entry?.isMarked ?? false;
     final completed = entry?.status == DayStatus.completed;
-    final hour = nowIn(track.schedule?.timeZone).hour;
     final message =
         'Hey ${track.ownerFirstName}, checking in on your Vouch promise: ${track.promise}. Did you get it done today?';
 
@@ -888,90 +1000,44 @@ class _PartnerHome extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _GreetingRow(
-            eyebrow: 'Witnessing · ${greetingForHour(hour)}',
-            title: track.ownerFirstName,
-            name: 'Your promise partner',
+          _Masthead(
+            eyebrow: 'Witnessing',
+            name: track.ownerFirstName,
+            date: controller.today,
             photoUrl: track.ownerPhotoUrl,
           ),
-          const SizedBox(height: 24),
-          ExpressiveCard(
-            color: VouchColors.indigo,
-            border: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'THE PROMISE',
-                  style: text.labelSmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  track.promise,
-                  style: text.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    height: 1.12,
-                  ),
-                ),
-                if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
-                  const SizedBox(height: 10),
-                  Text(
-                    '“${track.promiseNote!.trim()}”',
-                    style: text.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.78),
-                      height: 1.45,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
+          _PromiseHero(track: track),
+          const SizedBox(height: 32),
           SectionHeader(
+            index: '01',
             title: 'Today',
-            subtitle: marked
-                ? 'Your mark is in. You can change it if something new comes up.'
-                : 'Check in first. Then mark what actually happened.',
+            subtitle: marked ? null : 'Check in, then mark it.',
           ),
           if (!marked)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: <Color>[
-                    VouchColors.indigo.withValues(alpha: 0.16),
-                    VouchColors.indigo.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: VouchColors.indigo.withValues(alpha: 0.22),
-                ),
-              ),
+            InkCard(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Row(
                     children: <Widget>[
                       Container(
-                        width: 52,
-                        height: 52,
+                        width: 46,
+                        height: 46,
                         decoration: BoxDecoration(
                           color: VouchColors.indigo.withValues(alpha: 0.14),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
-                          Icons.visibility_rounded,
+                        child: Icon(
+                          state == VouchDayState.rest
+                              ? Icons.nights_stay_rounded
+                              : Icons.visibility_rounded,
                           color: VouchColors.indigo,
+                          size: 22,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 13),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,13 +1045,14 @@ class _PartnerHome extends StatelessWidget {
                             Text(
                               state == VouchDayState.rest
                                   ? 'Rest day'
-                                  : 'Waiting on your witness',
-                              style: text.titleMedium,
+                                  : 'Did ${track.ownerFirstName} keep it?',
+                              style: text.titleLarge,
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               state == VouchDayState.rest
                                   ? 'No promise is scheduled today.'
-                                  : 'Ask ${track.ownerFirstName} about it, then record the answer.',
+                                  : 'Ask, then record the answer.',
                               style: text.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
                               ),
@@ -995,7 +1062,7 @@ class _PartnerHome extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
                       _ContactAction(
@@ -1036,22 +1103,21 @@ class _PartnerHome extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () => _mark(context),
-                      icon: const Icon(Icons.fact_check_rounded),
-                      label: const Text('Mark today'),
-                    ),
+                  const SizedBox(height: 8),
+                  SoulButton(
+                    label: 'Mark today',
+                    icon: Icons.fact_check_rounded,
+                    onPressed: () => _mark(context),
                   ),
                 ],
               ),
             )
           else
-            ExpressiveCard(
-              color: (completed ? const Color(0xFF5F9E1F) : VouchColors.coral)
-                  .withValues(alpha: 0.09),
+            InkCard(
+              borderColor: (completed
+                      ? const Color(0xFF5F9E1F)
+                      : VouchColors.coral)
+                  .withValues(alpha: 0.45),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -1064,7 +1130,7 @@ class _PartnerHome extends StatelessWidget {
                         color: completed
                             ? const Color(0xFF4C7A16)
                             : VouchColors.coral,
-                        size: 34,
+                        size: 32,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1072,8 +1138,8 @@ class _PartnerHome extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              completed ? 'Marked kept' : 'Marked missed',
-                              style: text.titleMedium,
+                              completed ? 'Kept' : 'Missed',
+                              style: text.titleLarge,
                             ),
                             Text(
                               <String?>[
@@ -1091,13 +1157,12 @@ class _PartnerHome extends StatelessWidget {
                           ],
                         ),
                       ),
-                      StatusPill.mark(entry!.status, dense: true),
                     ],
                   ),
-                  if (entry.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
+                  if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
                     const SizedBox(height: 12),
                     Text(
-                      '“${entry.partnerNote!.trim()}”',
+                      '“${entry!.partnerNote!.trim()}”',
                       style: text.bodyMedium?.copyWith(height: 1.45),
                     ),
                   ],
@@ -1127,26 +1192,19 @@ class _PartnerHome extends StatelessWidget {
                 ],
               ),
             ),
+          if (entry?.hasNote ?? false) ...<Widget>[
+            const SizedBox(height: 30),
+            const SectionHeader(index: '02', title: 'Their words'),
+            NotePreview(note: entry?.note),
+          ],
           const SizedBox(height: 26),
-          SectionHeader(
-            title: 'In their words',
-            subtitle: entry?.hasNote ?? false
-                ? 'Updated ${entry?.noteUpdatedAt == null ? 'recently' : DateFormat('h:mm a').format(entry!.noteUpdatedAt!.toLocal())}'
-                : 'Nothing written down yet.',
-          ),
-          NotePreview(
-            note: entry?.note,
-            emptyLabel:
-                '${track.ownerFirstName} hasn’t written what they did today.',
-          ),
-          const SizedBox(height: 24),
-          _ReminderCard(controller: controller),
+          _ReminderLine(controller: controller),
           const SizedBox(height: 12),
           const NotificationPermissionCard(),
-          const SizedBox(height: 24),
-          const SectionHeader(
+          const SizedBox(height: 30),
+          SectionHeader(
+            index: (entry?.hasNote ?? false) ? '03' : '02',
             title: 'This week',
-            subtitle: 'Seven days of keeping your word.',
           ),
           ExpressiveCard(
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),

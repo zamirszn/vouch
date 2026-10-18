@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../core/date_utils.dart';
 import '../theme/vouch_theme.dart';
+import 'soul.dart';
 
 class PromiseOrb extends StatelessWidget {
   const PromiseOrb({
@@ -58,6 +59,15 @@ class PromiseOrb extends StatelessWidget {
         VouchDayState.upcoming => Icons.hourglass_top_rounded,
       };
 
+  /// The inner disc wears a different expressive silhouette per state, so the
+  /// orb changes personality — not just colour — as the day settles.
+  ExpressiveShape get _shape => switch (state) {
+        VouchDayState.completed => ExpressiveShape.cookie4Sided,
+        VouchDayState.missed => ExpressiveShape.softBurst,
+        VouchDayState.pending => ExpressiveShape.cookie,
+        VouchDayState.rest || VouchDayState.upcoming => ExpressiveShape.circle,
+      };
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -86,12 +96,6 @@ class PromiseOrb extends StatelessWidget {
             width: size * 0.70,
             height: size * 0.70,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: _gradient,
-              ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
                   color: _accent.withValues(alpha: 0.30),
@@ -100,41 +104,67 @@ class PromiseOrb extends StatelessWidget {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(_icon, color: VouchColors.cream, size: size * 0.10),
-                const SizedBox(height: 2),
-                Text(
-                  '$streak',
-                  style: text.displayMedium?.copyWith(
-                    color: VouchColors.cream,
-                    fontSize: size * 0.18,
-                    height: 1,
+            child: ShapeClip(
+              shape: _shape,
+              from: ExpressiveShape.circle,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: _gradient,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'day streak',
-                  style: text.labelMedium?.copyWith(
-                    color: VouchColors.cream.withValues(alpha: 0.85),
+                child: Padding(
+                  padding: EdgeInsets.all(size * 0.06),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(_icon, color: VouchColors.cream, size: size * 0.10),
+                      const SizedBox(height: 2),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 320),
+                        switchInCurve: Curves.easeOutCubic,
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(begin: 0.80, end: 1)
+                                  .animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          '$streak',
+                          key: ValueKey<int>(streak),
+                          style: text.displayMedium?.copyWith(
+                            color: VouchColors.cream,
+                            fontSize: size * 0.18,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'day streak',
+                        style: text.labelMedium?.copyWith(
+                          color: VouchColors.cream.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
           Positioned(
             bottom: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: scheme.outlineVariant.withValues(alpha: 0.6),
-                ),
-              ),
-              child: Text(caption, style: text.labelMedium),
+            child: Sticker(
+              caption,
+              rotation: 0.035,
+              color: scheme.surface,
+              foreground: scheme.onSurface,
             ),
           ),
         ],
