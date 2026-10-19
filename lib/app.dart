@@ -114,6 +114,7 @@ class _VouchAppState extends State<VouchApp> with WidgetsBindingObserver {
             child: WidgetsApp(
               title: VouchConfig.appName,
               color: themeData.canvas,
+              debugShowCheckedModeBanner: false,
               textStyle: VouchType.body(themeData.ink),
               home: const bool.fromEnvironment('VOUCH_GALLERY')
                   ? const GalleryScreen()

@@ -8,16 +8,23 @@ reminded at the same moment as the owner, and marks each day kept or missed.
 The owner writes what they did; the witness can call, message, or check in
 person before marking.
 
-Material 3 Expressive throughout: spring motion with
-[`motor`](https://pub.dev/packages/motor), wavy progress, shape-morphing
-loaders, connected button groups, fade-through tab switches and expressive page
-transitions from [`expressive_m3`](https://pub.dev/packages/expressive_m3),
-bold colour blocking, oversized type, floating surfaces, edge-to-edge layout,
-and an animated background.
+The interface is a custom, Material-free design system in the visual language
+of Slava Kornilov / GeexArts: full-bleed state gradients (pending violet, kept
+mint, missed coral, rest graphite), frosted glass panels, dot-matrix numerals,
+vertical rulers, oversized tight grotesque headlines and mono annotations. The
+root is a `WidgetsApp`; there is no `MaterialApp`, `ThemeData`, `ColorScheme`,
+Material icon font or Material widget anywhere in `lib/`. Text fields, sheets,
+dialogs, toasts, switches, buttons, loaders, the time picker and every glyph
+are drawn in-house.
 
-Type is set in **Bricolage Grotesque** (display, headlines, titles) paired with
-**Manrope** (body and interface labels). Both variable fonts are bundled under
-`assets/fonts/` with their OFL licences.
+Motion is built on [`motor`](https://pub.dev/packages/motor): every press
+springs and settles, counters and rulers animate their values, the background
+aura breathes on a ping-pong loop, sections stagger in, and sheets lift with a
+spring. Reduced-motion settings turn all of it static.
+
+Type is set in **Instrument Sans** (variable) paired with **Space Mono** for
+labels and annotations. Both fonts are bundled under `assets/fonts/` with their
+OFL licences.
 
 ---
 
@@ -61,7 +68,7 @@ the database is ever recreated with the standard alias, drop that argument.
   (needs a phone number saved in Settings).
 - **History & stats.** Month calendar, current/best streak, days kept, kept
   rate, and a day-by-day detail sheet.
-- **Material 3 Expressive motion** with reduced-motion support.
+- **Custom spring motion** on every surface, with reduced-motion support.
 - **Light/dark/system themes**, persisted locally.
 
 ## Run it
@@ -91,7 +98,17 @@ flutter test
 
 Coverage includes day-key/date maths, schedule occurrence generation, streak
 and completion calculations, Firestore model parsing, and a full demo-mode
-widget flow (owner home → settings → witness side → mark sheet).
+widget flow (owner home → settings → witness side → mark sheet), plus a
+component-gallery render test and a reduced-motion pass.
+
+### Component gallery
+
+```bash
+flutter run --dart-define=VOUCH_GALLERY=true
+```
+
+Previews every tone, type style, colour token, button state, field, number,
+sheet, glyph and toast without touching Firebase.
 
 ## Firebase setup
 
@@ -199,17 +216,20 @@ lib/
   services/    auth, Firestore repository, demo repository,
                notifications, contact actions
   state/       AuthController, TrackController, ThemeController
-  theme/       colour schemes, type scale, shapes, motion springs
+  design/      tokens, type scale, theme scope, motion, routes, sequences
+  components/  glass, gradient field, buttons, fields, sheets, dialogs,
+               toasts, glyphs, numbers, rulers, week strip, loaders
   screens/     splash, auth, onboarding, create/join, waiting,
-               schedule setup, role-aware home, history, settings
-  widgets/     sheets, cards, status pills, calendar, confetti, backgrounds
+               schedule setup, role-aware home, history, settings, gallery
 tool/          brand asset generation and browser automation used during setup
 ```
 
 ## Brand
 
-- Indigo `#5B4BFF`, coral `#FF6A55`, lime `#C9F27A`, cream `#FFF8F2`,
-  ink `#171520`.
+- Launcher and store art keep the brand palette: indigo `#5B4BFF`, coral
+  `#FF6A55`, lime `#C9F27A`, cream `#FFF8F2`, ink `#171520`. In-app surfaces
+  use their own tokens in `lib/design/vouch_tokens.dart` (canvas `#08090B`,
+  signal yellow `#E8FF3A`, mint `#67F5B5`, coral `#FF5C5C`, violet `#8C7BFF`).
 - The mark is deliberately simple: one bold cream check on an indigo
   gradient with a single coral dot as the witness.
 - Adaptive launcher icon, monochrome themed icon, Android 12 splash, and a
