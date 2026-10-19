@@ -5,9 +5,14 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-import 'poster.dart';
+import '../design/vouch_theme.dart';
+import '../design/vouch_tokens.dart';
+import '../design/vouch_type.dart';
+import 'glass_card.dart';
+import 'vouch_button.dart';
+import 'vouch_icon.dart';
 
 Future<void> showCelebration(
   BuildContext context, {
@@ -18,12 +23,15 @@ Future<void> showCelebration(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Celebration',
-    barrierColor: Colors.black.withValues(alpha: 0.35),
+    barrierColor: const Color(0xB3000000),
     transitionDuration: const Duration(milliseconds: 380),
     pageBuilder: (context, animation, secondaryAnimation) {
       return CelebrationOverlay(title: title, message: message);
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+        return FadeTransition(opacity: animation, child: child);
+      }
       final curved = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutBack,
@@ -78,6 +86,8 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+
     return Stack(
       alignment: Alignment.topCenter,
       children: <Widget>[
@@ -90,81 +100,72 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
           maxBlastForce: 26,
           minBlastForce: 8,
           gravity: 0.16,
-          colors: const <Color>[
-            PosterColors.acid,
-            PosterColors.cobalt,
-            PosterColors.coral,
-            PosterColors.kelly,
-            PosterColors.cream,
+          colors: <Color>[
+            theme.accent,
+            theme.pending,
+            theme.missed,
+            theme.kept,
+            VouchColors.paper,
           ],
         ),
         Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: GlassCard(
+                radius: VouchRadius.large,
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                decoration: BoxDecoration(
-                  color: PosterColors.ink,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: PosterColors.cream.withValues(alpha: 0.16),
-                  ),
-                ),
+                glow: true,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Container(
                       width: 78,
                       height: 78,
-                      decoration: const BoxDecoration(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: PosterColors.acid,
+                        color: theme.accent,
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: theme.accent.withValues(alpha: 0.32),
+                            blurRadius: 34,
+                            spreadRadius: -6,
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: PosterColors.ink,
-                        size: 44,
+                      child: VouchIcon(
+                        VouchGlyph.check,
+                        size: 40,
+                        color: VouchColors.paperInk,
+                        strokeWidth: 2.2,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: VouchSpace.x5),
                     Text(
                       widget.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'InstrumentSans',
-                        fontSize: 29,
-                        fontWeight: FontWeight.w700,
+                      style: VouchType.display(theme.ink).copyWith(
+                        fontSize: 30,
                         height: 0.98,
-                        letterSpacing: -1.2,
-                        color: PosterColors.cream,
-                        fontVariations: <FontVariation>[
-                          FontVariation('wght', 700),
-                          FontVariation('wdth', 94),
-                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: VouchSpace.x2),
                     Text(
                       widget.message,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'InstrumentSans',
+                      style: VouchType.caption(theme.muted).copyWith(
                         fontSize: 13,
                         height: 1.45,
-                        color: PosterColors.cream.withValues(alpha: 0.66),
                       ),
                     ),
-                    const SizedBox(height: 22),
-                    PosterPill(
+                    const SizedBox(height: VouchSpace.x5),
+                    VouchButton(
                       label: 'Keep going',
-                      height: 52,
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      color: PosterColors.cream,
-                      foreground: PosterColors.ink,
-                      arrowColor: PosterColors.acid,
-                      arrowForeground: PosterColors.ink,
+                      expand: true,
+                      onPressed: () =>
+                          Navigator.of(context).maybePop(),
                     ),
                   ],
                 ),

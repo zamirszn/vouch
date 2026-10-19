@@ -8,8 +8,6 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart' show DefaultCupertinoLocalizations;
 import 'package:flutter/gestures.dart';
-// Temporary bridge while legacy Material screens are migrated screen by screen.
-import 'package:flutter/material.dart' show DefaultMaterialLocalizations;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -119,7 +117,6 @@ class _VouchAppState extends State<VouchApp> with WidgetsBindingObserver {
               home: const RootGate(),
               pageRouteBuilder: vouchPageRoute,
               localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-                DefaultMaterialLocalizations.delegate,
                 DefaultCupertinoLocalizations.delegate,
               ],
               builder: (context, child) => ScrollConfiguration(

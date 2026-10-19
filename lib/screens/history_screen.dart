@@ -21,7 +21,7 @@ import '../design/vouch_type.dart';
 import '../models/day_entry.dart';
 import '../models/schedule.dart';
 import '../state/track_controller.dart';
-import '../widgets/day_detail_sheet.dart';
+import '../components/day_detail_sheet.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});

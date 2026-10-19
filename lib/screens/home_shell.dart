@@ -32,12 +32,12 @@ import '../models/day_entry.dart';
 import '../models/track.dart';
 import '../services/notification_service.dart';
 import '../state/track_controller.dart';
-import '../widgets/celebration.dart';
+import '../components/celebration.dart';
 import '../components/contact_panel.dart';
-import '../widgets/day_detail_sheet.dart';
-import '../widgets/mark_sheet.dart';
-import '../widgets/note_editor_sheet.dart';
-import '../widgets/notification_permission_card.dart';
+import '../components/day_detail_sheet.dart';
+import '../components/mark_sheet.dart';
+import '../components/note_editor_sheet.dart';
+import '../components/notification_permission_card.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 

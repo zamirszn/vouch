@@ -4,9 +4,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
-import '../components/glass_card.dart';
-import '../components/vouch_button.dart';
-import '../components/vouch_icon.dart';
+import 'glass_card.dart';
+import 'vouch_button.dart';
+import 'vouch_icon.dart';
 import '../design/vouch_theme.dart';
 import '../design/vouch_tokens.dart';
 import '../design/vouch_type.dart';

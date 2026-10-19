@@ -29,7 +29,7 @@ import '../state/auth_controller.dart';
 import '../state/theme_controller.dart';
 import '../state/track_controller.dart';
 import '../components/contact_panel.dart';
-import '../widgets/notification_permission_card.dart';
+import '../components/notification_permission_card.dart';
 import 'schedule_setup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
