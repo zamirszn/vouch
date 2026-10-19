@@ -27,6 +27,7 @@ class VouchField extends StatefulWidget {
     this.maxLines = 1,
     this.minLines,
     this.maxLength,
+    this.inputFormatters,
     this.onChanged,
     this.onSubmitted,
     this.focusNode,
@@ -56,6 +57,7 @@ class VouchField extends StatefulWidget {
   final int maxLines;
   final int? minLines;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final FocusNode? focusNode;
@@ -175,11 +177,11 @@ class _VouchFieldState extends State<VouchField> {
                   obscureText: widget.obscureText,
                   maxLines: widget.maxLines,
                   minLines: widget.minLines,
-                  inputFormatters: widget.maxLength == null
-                      ? null
-                      : <TextInputFormatter>[
-                          LengthLimitingTextInputFormatter(widget.maxLength),
-                        ],
+                  inputFormatters: <TextInputFormatter>[
+                    ...?widget.inputFormatters,
+                    if (widget.maxLength != null)
+                      LengthLimitingTextInputFormatter(widget.maxLength),
+                  ],
                   autocorrect: widget.autocorrect,
                   enableSuggestions: widget.enableSuggestions,
                   onChanged: widget.onChanged,

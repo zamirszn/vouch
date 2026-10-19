@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../components/glass_card.dart';
 import '../components/pressable.dart';
 import '../components/reveal.dart';
+import '../components/section_label.dart';
 import '../components/stat_tile.dart';
 import '../components/vouch_icon.dart';
 import '../components/vouch_top_bar.dart';
@@ -163,7 +164,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: VouchSpace.x6),
             Reveal(
               index: 3,
-              child: _SectionLabel(index: '01', title: 'the month'),
+              child: SectionLabel(index: '01', title: 'the month'),
             ),
             const SizedBox(height: VouchSpace.x3),
             Reveal(
@@ -266,7 +267,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: VouchSpace.x6),
             Reveal(
               index: 5,
-              child: _SectionLabel(
+              child: SectionLabel(
                 index: '02',
                 title: 'recent days',
                 trailing: recent.isEmpty ? null : '${recent.length} marked',
@@ -338,42 +339,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
 // ---------------------------------------------------------------------------
 // The month
 // ---------------------------------------------------------------------------
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.index,
-    required this.title,
-    this.trailing,
-  });
-
-  final String index;
-  final String title;
-  final String? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = VouchScope.of(context);
-    return Row(
-      children: <Widget>[
-        Text(index, style: VouchType.mono(theme.faint, size: 10)),
-        const SizedBox(width: VouchSpace.x3),
-        Text(
-          title.toUpperCase(),
-          style: VouchType.label(theme.muted, size: 10),
-        ),
-        const SizedBox(width: VouchSpace.x3),
-        Expanded(child: Container(height: 1, color: theme.line)),
-        if (trailing != null) ...<Widget>[
-          const SizedBox(width: VouchSpace.x3),
-          Text(
-            trailing!.toUpperCase(),
-            style: VouchType.label(theme.faint, size: 9),
-          ),
-        ],
-      ],
-    );
-  }
-}
 
 class _MonthButton extends StatelessWidget {
   const _MonthButton({

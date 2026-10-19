@@ -1,22 +1,35 @@
-/// You, printed on clay: the account, the rhythm, the person on the other
-/// side and the quiet switches. Flat cards, one black pill at a time.
+/// You: the account, the rhythm, the person on the other side and the quiet
+/// switches. A glass list, one signal action at a time.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+import '../components/glass_card.dart';
+import '../components/pressable.dart';
+import '../components/reveal.dart';
+import '../components/section_label.dart';
+import '../components/stat_tile.dart';
+import '../components/vouch_button.dart';
+import '../components/vouch_dialog.dart';
+import '../components/vouch_field.dart';
+import '../components/vouch_icon.dart';
+import '../components/vouch_loader.dart';
+import '../components/vouch_sheet.dart';
+import '../components/vouch_toast.dart';
+import '../components/vouch_top_bar.dart';
 import '../core/constants.dart';
+import '../design/vouch_route.dart';
+import '../design/vouch_theme.dart';
+import '../design/vouch_tokens.dart';
+import '../design/vouch_type.dart';
 import '../services/notification_service.dart';
 import '../state/auth_controller.dart';
 import '../state/theme_controller.dart';
 import '../state/track_controller.dart';
 import '../widgets/contact_sheet.dart';
 import '../widgets/notification_permission_card.dart';
-import '../widgets/poster.dart';
-import '../widgets/sheet_frame.dart';
-import '../widgets/vouch_avatar.dart';
-import '../widgets/vouch_loader.dart';
 import 'schedule_setup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -55,8 +68,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await HapticFeedback.lightImpact();
     if (!mounted) return;
     setState(() => _testing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Test reminder sent.')),
+    VouchToast.show(
+      context,
+      'Test reminder sent.',
+      accent: VouchScope.of(context).kept,
     );
     _loadStatus();
   }
@@ -67,16 +82,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final current = controller.isOwner
         ? (track?.ownerPhone ?? auth.profile?.phone)
         : (track?.partnerPhone ?? auth.profile?.phone);
-    final saved = await showVouchSheet<bool>(
+    final saved = await showVouchPanel<bool>(
       context,
-      _PhoneSheet(
+      (context) => _PhoneSheet(
         initial: current,
         onSave: controller.saveMyPhone,
       ),
     );
     if (!mounted || saved != true) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Phone number updated.')),
+    VouchToast.show(
+      context,
+      'Phone number updated.',
+      accent: VouchScope.of(context).kept,
     );
   }
 
@@ -85,31 +102,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String message,
     required String action,
     bool destructive = true,
-  }) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: destructive
-                ? FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    foregroundColor: Theme.of(context).colorScheme.onError,
-                  )
-                : null,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(action),
-          ),
-        ],
-      ),
+  }) {
+    return showVouchConfirm(
+      context,
+      title: title,
+      message: message,
+      action: action,
+      destructive: destructive,
     );
-    return result ?? false;
   }
 
   Future<void> _endOrLeave(TrackController controller) async {
@@ -126,8 +126,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         partner ? await controller.leaveTrack() : await controller.endTrack();
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+      VouchToast.show(
+        context,
+        error,
+        glyph: VouchGlyph.closeCircle,
+        accent: VouchScope.of(context).missed,
+      );
     }
   }
 
@@ -147,397 +151,408 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
     final auth = context.watch<AuthController>();
-    final theme = context.watch<ThemeController>();
-    final style = PosterStyle.of(context);
+    final themeController = context.watch<ThemeController>();
+    final theme = VouchScope.of(context);
     final track = controller.track;
     final isPartner = controller.isPartner;
     final partnerName = isPartner
         ? (track?.ownerName ?? 'Owner')
         : (track?.partnerName ?? 'Partner');
-    final partnerPhoto =
-        isPartner ? track?.ownerPhotoUrl : track?.partnerPhotoUrl;
     final partnerPhone = isPartner ? track?.ownerPhone : track?.partnerPhone;
     final myPhone = isPartner ? track?.partnerPhone : track?.ownerPhone;
     final roleLabel = isPartner ? 'Witness' : 'Promise owner';
     final notificationStatus = _notificationStatus;
+    final statusLine = notificationStatus == null
+        ? 'Checking this phone…'
+        : notificationStatus.notificationsEnabled
+            ? '${notificationStatus.pendingCount} reminder'
+                '${notificationStatus.pendingCount == 1 ? '' : 's'} scheduled'
+            : 'Reminders are off';
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
-        114 + MediaQuery.paddingOf(context).bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const PosterTopBar(right: 'You / (003)'),
-          const SizedBox(height: 28),
-          const PosterHeadline(
-            'You\n& them.',
-            size: 50,
-            accentTail: 2,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Account, rhythm and the person on the other side.',
-            style: TextStyle(
-              fontFamily: 'InstrumentSans',
-              fontSize: 13,
-              height: 1.35,
-              color: style.muted,
+    return SafeArea(
+      bottom: false,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          VouchSpace.gutter,
+          VouchSpace.x2,
+          VouchSpace.gutter,
+          VouchSpace.navHeight +
+              MediaQuery.viewPaddingOf(context).bottom +
+              VouchSpace.x10,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Reveal(
+              index: 0,
+              child: VouchTopBar(annotation: 'You / (003)'),
             ),
-          ),
-          const SizedBox(height: 24),
-          PosterCard(
-            child: Row(
-              children: <Widget>[
-                VouchAvatar(
-                  name: auth.displayName,
-                  photoUrl: auth.photoUrl,
-                  size: 54,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        auth.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                          height: 1.1,
-                          color: style.cardInk,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 700),
-                          ],
-                        ),
-                      ),
-                      if (auth.email.isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 2),
-                        Text(
-                          auth.email,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'InstrumentSans',
-                            fontSize: 12,
-                            color: style.cardMuted,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      PosterTag(
-                        roleLabel,
-                        color: (isPartner ? PosterColors.coral : PosterColors.cobalt)
-                            .withValues(alpha: 0.13),
-                        foreground:
-                            isPartner ? PosterColors.coral : PosterColors.cobalt,
-                        icon: isPartner
-                            ? Icons.visibility_rounded
-                            : Icons.flag_rounded,
-                      ),
-                    ],
+            const SizedBox(height: VouchSpace.x6),
+            Reveal(
+              index: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'You\n& them.',
+                    style: VouchType.hero(theme.ink)
+                        .copyWith(fontSize: 52, height: 0.92),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          _Tile(
-            icon: Icons.phone_rounded,
-            title: 'Phone number',
-            subtitle: (myPhone?.trim().isNotEmpty ?? false)
-                ? myPhone!
-                : (auth.profile?.phone?.trim().isNotEmpty ?? false)
-                    ? auth.profile!.phone!
-                    : 'Add a number so your partner can reach you',
-            onTap: () => _editPhone(controller),
-            trailing: const Icon(Icons.edit_outlined, size: 18),
-          ),
-          const SizedBox(height: 28),
-          const PosterSectionLabel('01', 'the rhythm'),
-          const SizedBox(height: 10),
-          PosterCard(
-            onTap: isPartner
-                ? () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const ScheduleSetupScreen(),
-                      ),
-                    )
-                : null,
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: PosterColors.cobalt.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(11),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Account, rhythm and the person on the other side.',
+                    style: VouchType.caption(theme.muted),
                   ),
-                  child: const Icon(
-                    Icons.schedule_rounded,
-                    color: PosterColors.cobalt,
-                    size: 21,
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        track?.schedule?.summary ?? 'No schedule yet',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: style.cardInk,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 700),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        track?.schedule == null
-                            ? 'Waiting for the witness'
-                            : '${track!.schedule!.kind.describe()} in ${track.schedule!.zoneLabel}',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 12,
-                          height: 1.3,
-                          color: style.cardMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isPartner)
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: style.cardMuted,
-                  )
-                else
-                  PosterLabel(
-                    'set by\nwitness',
-                    color: style.cardMuted,
-                    size: 8,
-                    tracking: 0.8,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          PosterSectionLabel(
-            '02',
-            'notifications',
-            trailing: IconButton(
-              tooltip: 'Refresh status',
-              onPressed: _loadStatus,
-              icon: Icon(
-                Icons.refresh_rounded,
-                size: 19,
-                color: style.ink,
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            notificationStatus == null
-                ? 'Checking this phone…'
-                : notificationStatus.notificationsEnabled
-                    ? '${notificationStatus.pendingCount} reminder${notificationStatus.pendingCount == 1 ? '' : 's'} scheduled'
-                    : 'Reminders are off',
-            style: TextStyle(
-              fontFamily: 'InstrumentSans',
-              fontSize: 12,
-              color: style.muted,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const NotificationPermissionCard(),
-          _Tile(
-            icon: Icons.notification_add_outlined,
-            title: 'Send a test reminder',
-            subtitle: null,
-            onTap: _testing ? null : () => _sendTest(controller),
-            trailing: _testing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: VouchLoader(size: 22),
-                  )
-                : const Icon(Icons.chevron_right_rounded, size: 18),
-          ),
-          const SizedBox(height: 28),
-          PosterSectionLabel(
-            '03',
-            isPartner ? 'the promise owner' : 'your witness',
-          ),
-          const SizedBox(height: 10),
-          PosterCard(
-            child: Row(
-              children: <Widget>[
-                VouchAvatar(
-                  name: partnerName,
-                  photoUrl: partnerPhoto,
-                  size: 46,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        partnerName,
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                          color: style.cardInk,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 700),
+            const SizedBox(height: VouchSpace.x6),
+            Reveal(
+              index: 2,
+              child: GlassCard(
+                radius: VouchRadius.card,
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: <Widget>[
+                    VouchAvatar(
+                      initials: _initials(auth.displayName),
+                      size: 54,
+                    ),
+                    const SizedBox(width: VouchSpace.x3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            auth.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: VouchType.cardTitle(theme.ink)
+                                .copyWith(fontSize: 19),
+                          ),
+                          if (auth.email.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 2),
+                            Text(
+                              auth.email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: VouchType.caption(theme.muted)
+                                  .copyWith(fontSize: 12),
+                            ),
                           ],
-                        ),
+                          const SizedBox(height: 9),
+                          StatusChip(
+                            label: roleLabel,
+                            tone: isPartner
+                                ? VouchTone.pending
+                                : VouchTone.kept,
+                          ),
+                        ],
                       ),
-                      Text(
-                        (partnerPhone?.trim().isNotEmpty ?? false)
-                            ? partnerPhone!
-                            : 'No phone number shared yet',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 12,
-                          color: style.cardMuted,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                IconButton.filled(
-                  tooltip: 'Contact',
-                  style: IconButton.styleFrom(
-                    backgroundColor: style.cardInk,
-                    foregroundColor: PosterColors.acid,
-                  ),
-                  onPressed: () => showContactSheet(
-                    context,
-                    name: partnerName.split(RegExp(r'\s+')).first,
-                    phone: partnerPhone,
-                    message:
-                        'Checking in on our Vouch promise: ${track?.promise ?? ''}',
-                  ),
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 28),
-          const PosterSectionLabel('04', 'appearance'),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              for (final mode in <VouchThemeMode>[
-                VouchThemeMode.system,
-                VouchThemeMode.light,
-                VouchThemeMode.dark,
-              ])
-                _ChoicePill(
-                  selected: theme.mode == mode,
-                  icon: switch (mode) {
-                    VouchThemeMode.system => Icons.brightness_auto_rounded,
-                    VouchThemeMode.light => Icons.light_mode_rounded,
-                    VouchThemeMode.dark => Icons.dark_mode_rounded,
-                  },
-                  label: switch (mode) {
-                    VouchThemeMode.system => 'System',
-                    VouchThemeMode.light => 'Light',
-                    VouchThemeMode.dark => 'Dark',
-                  },
-                  onTap: () => theme.setMode(mode),
+            const SizedBox(height: VouchSpace.x2),
+            Reveal(
+              index: 3,
+              child: _RowCard(
+                glyph: VouchGlyph.phone,
+                title: 'Phone number',
+                subtitle: (myPhone?.trim().isNotEmpty ?? false)
+                    ? myPhone!
+                    : (auth.profile?.phone?.trim().isNotEmpty ?? false)
+                        ? auth.profile!.phone!
+                        : 'Add a number so your partner can reach you',
+                onTap: () => _editPhone(controller),
+                trailing: VouchIcon(
+                  VouchGlyph.edit,
+                  size: 16,
+                  color: theme.muted,
                 ),
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x6),
+            const Reveal(
+              index: 4,
+              child: SectionLabel(index: '01', title: 'the rhythm'),
+            ),
+            const SizedBox(height: VouchSpace.x3),
+            Reveal(
+              index: 5,
+              child: _RowCard(
+                glyph: VouchGlyph.clock,
+                title: track?.schedule?.summary ?? 'No schedule yet',
+                subtitle: track?.schedule == null
+                    ? 'Waiting for the witness'
+                    : '${track!.schedule!.kind.describe()} in '
+                        '${track.schedule!.zoneLabel}',
+                onTap: isPartner
+                    ? () => pushVouch(
+                          context,
+                          (context) => const ScheduleSetupScreen(),
+                        )
+                    : null,
+                trailing: isPartner
+                    ? VouchIcon(
+                        VouchGlyph.chevronRight,
+                        size: 16,
+                        color: theme.muted,
+                      )
+                    : Text(
+                        'SET BY\nWITNESS',
+                        textAlign: TextAlign.right,
+                        style: VouchType.label(theme.faint, size: 8),
+                      ),
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x6),
+            Reveal(
+              index: 6,
+              child: Row(
+                children: <Widget>[
+                  const Expanded(
+                    child: SectionLabel(index: '02', title: 'notifications'),
+                  ),
+                  const SizedBox(width: VouchSpace.x2),
+                  Pressable(
+                    haptic: false,
+                    semanticLabel: 'Refresh status',
+                    onTap: _loadStatus,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.glassStrong,
+                        border: Border.all(color: theme.line, width: 1),
+                      ),
+                      child: VouchIcon(
+                        VouchGlyph.refresh,
+                        size: 14,
+                        color: theme.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x2),
+            Reveal(
+              index: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(statusLine, style: VouchType.caption(theme.muted)),
+                  const SizedBox(height: VouchSpace.x3),
+                  const NotificationPermissionCard(),
+                  const SizedBox(height: VouchSpace.x2),
+                  _RowCard(
+                    glyph: VouchGlyph.bell,
+                    title: 'Send a test reminder',
+                    onTap: _testing ? null : () => _sendTest(controller),
+                    tint: theme.kept,
+                    trailing: _testing
+                        ? VouchLoader(size: 16, color: theme.ink)
+                        : VouchIcon(
+                            VouchGlyph.chevronRight,
+                            size: 16,
+                            color: theme.muted,
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x6),
+            Reveal(
+              index: 8,
+              child: SectionLabel(
+                index: '03',
+                title: isPartner ? 'the promise owner' : 'your witness',
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x3),
+            Reveal(
+              index: 9,
+              child: GlassCard(
+                radius: VouchRadius.medium,
+                padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                child: Row(
+                  children: <Widget>[
+                    VouchAvatar(initials: _initials(partnerName), size: 46),
+                    const SizedBox(width: VouchSpace.x3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            partnerName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: VouchType.bodyStrong(theme.ink)
+                                .copyWith(fontSize: 15.5),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            (partnerPhone?.trim().isNotEmpty ?? false)
+                                ? partnerPhone!
+                                : 'No phone number shared yet',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: VouchType.caption(theme.muted)
+                                .copyWith(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: VouchSpace.x2),
+                    CircleAction(
+                      glyph: VouchGlyph.message,
+                      size: 42,
+                      background: theme.ink,
+                      foreground: theme.canvas,
+                      border: theme.ink,
+                      semanticLabel: 'Contact',
+                      onTap: () => showContactSheet(
+                        context,
+                        name: partnerName.split(RegExp(r'\s+')).first,
+                        phone: partnerPhone,
+                        message:
+                            'Checking in on our Vouch promise: ${track?.promise ?? ''}',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: VouchSpace.x6),
+            const Reveal(
+              index: 10,
+              child: SectionLabel(index: '04', title: 'appearance'),
+            ),
+            const SizedBox(height: VouchSpace.x3),
+            Reveal(
+              index: 11,
+              child: Wrap(
+                spacing: VouchSpace.x2,
+                runSpacing: VouchSpace.x2,
+                children: <Widget>[
+                  for (final mode in <VouchThemeMode>[
+                    VouchThemeMode.system,
+                    VouchThemeMode.light,
+                    VouchThemeMode.dark,
+                  ])
+                    _ChoicePill(
+                      selected: themeController.mode == mode,
+                      glyph: switch (mode) {
+                        VouchThemeMode.system => VouchGlyph.eye,
+                        VouchThemeMode.light => VouchGlyph.sun,
+                        VouchThemeMode.dark => VouchGlyph.moon,
+                      },
+                      label: switch (mode) {
+                        VouchThemeMode.system => 'System',
+                        VouchThemeMode.light => 'Light',
+                        VouchThemeMode.dark => 'Dark',
+                      },
+                      onTap: () => themeController.setMode(mode),
+                    ),
+                ],
+              ),
+            ),
+            if (controller.isDemo) ...<Widget>[
+              const SizedBox(height: VouchSpace.x6),
+              const Reveal(
+                index: 12,
+                child: SectionLabel(
+                  index: '05',
+                  title: 'Demo preview',
+                  preserveCase: true,
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x3),
+              Reveal(
+                index: 13,
+                child: Wrap(
+                  spacing: VouchSpace.x2,
+                  runSpacing: VouchSpace.x2,
+                  children: <Widget>[
+                    _ChoicePill(
+                      selected: !isPartner,
+                      glyph: VouchGlyph.star,
+                      label: 'Owner',
+                      onTap: () => controller.switchDemoRole(false),
+                    ),
+                    _ChoicePill(
+                      selected: isPartner,
+                      glyph: VouchGlyph.eye,
+                      label: 'Witness',
+                      onTap: () => controller.switchDemoRole(true),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-          if (controller.isDemo) ...<Widget>[
-            const SizedBox(height: 28),
-            const PosterSectionLabel(
-              '05',
-              'Demo preview',
-              uppercase: false,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                _ChoicePill(
-                  selected: !isPartner,
-                  icon: Icons.flag_rounded,
-                  label: 'Owner',
-                  onTap: () => controller.switchDemoRole(false),
+            const SizedBox(height: VouchSpace.x6),
+            if (!auth.demoMode) ...<Widget>[
+              Reveal(
+                index: 14,
+                child: _RowCard(
+                  glyph: VouchGlyph.logout,
+                  title: 'Sign out',
+                  tint: theme.muted,
+                  onTap: _signOut,
+                  trailing: const SizedBox.shrink(),
                 ),
-                _ChoicePill(
-                  selected: isPartner,
-                  icon: Icons.visibility_rounded,
-                  label: 'Witness',
-                  onTap: () => controller.switchDemoRole(true),
-                ),
-              ],
+              ),
+              const SizedBox(height: VouchSpace.x2),
+            ],
+            Reveal(
+              index: 15,
+              child: _RowCard(
+                glyph: VouchGlyph.logout,
+                title: isPartner ? 'Leave as witness' : 'End this promise',
+                subtitle: isPartner
+                    ? 'Stop witnessing. Their record stays.'
+                    : 'End it for both of you.',
+                tint: theme.missed,
+                onTap: () => _endOrLeave(controller),
+                trailing: const SizedBox.shrink(),
+              ),
             ),
+            const SizedBox(height: VouchSpace.x6),
+            Container(height: 1, color: theme.line),
+            const SizedBox(height: VouchSpace.x4),
+            Text('Vouch', style: VouchType.body(theme.muted)),
+            const SizedBox(height: 4),
+            Text('Version 1.0.0', style: VouchType.caption(theme.faint)),
           ],
-          const SizedBox(height: 28),
-          if (!auth.demoMode) ...<Widget>[
-            _Tile(
-              icon: Icons.logout_rounded,
-              title: 'Sign out',
-              subtitle: null,
-              onTap: _signOut,
-              tint: style.muted,
-            ),
-            const SizedBox(height: 8),
-          ],
-          _Tile(
-            icon: isPartner
-                ? Icons.exit_to_app_rounded
-                : Icons.stop_circle_outlined,
-            title: isPartner ? 'Leave as witness' : 'End this promise',
-            subtitle: isPartner
-                ? 'Stop witnessing. Their record stays.'
-                : 'End it for both of you.',
-            onTap: () => _endOrLeave(controller),
-            tint: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 24),
-          PosterFooter(
-            lead: 'Vouch',
-            muted: 'Version 1.0.0',
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile({
-    required this.icon,
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
+class _RowCard extends StatelessWidget {
+  const _RowCard({
+    required this.glyph,
     required this.title,
     this.subtitle,
-    required this.onTap,
+    this.onTap,
     this.trailing,
     this.tint,
   });
 
-  final IconData icon;
+  final VouchGlyph glyph;
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
@@ -546,68 +561,58 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
-    final color = tint ?? PosterColors.cobalt;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: PosterCard(
-        onTap: onTap,
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+    final theme = VouchScope.of(context);
+    final color = tint ?? theme.pending;
+    return GlassCard(
+      radius: VouchRadius.medium,
+      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+      onTap: onTap,
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(VouchRadius.small),
+              border: Border.all(
+                color: color.withValues(alpha: 0.26),
+                width: 1,
               ),
-              child: Icon(icon, color: color, size: 19),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
+            child: VouchIcon(glyph, size: 18, color: color),
+          ),
+          const SizedBox(width: VouchSpace.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: VouchType.bodyStrong(theme.ink)
+                      .copyWith(fontSize: 14.5),
+                ),
+                if (subtitle != null) ...<Widget>[
+                  const SizedBox(height: 2),
                   Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'InstrumentSans',
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.1,
-                      color: style.cardInk,
-                      fontVariations: const <FontVariation>[
-                        FontVariation('wght', 600),
-                      ],
-                    ),
+                    subtitle!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: VouchType.caption(theme.muted)
+                        .copyWith(fontSize: 11.5, height: 1.3),
                   ),
-                  if (subtitle != null) ...<Widget>[
-                    const SizedBox(height: 1),
-                    Text(
-                      subtitle!,
-                      maxLines: 2,
-                      style: TextStyle(
-                        fontFamily: 'InstrumentSans',
-                        fontSize: 11.5,
-                        height: 1.3,
-                        color: style.cardMuted,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-            if (trailing != null) ...<Widget>[
-              const SizedBox(width: 8),
-              IconTheme(
-                data: IconThemeData(color: style.cardMuted, size: 18),
-                child: trailing!,
-              ),
-            ],
+          ),
+          if (trailing != null) ...<Widget>[
+            const SizedBox(width: VouchSpace.x2),
+            trailing!,
           ],
-        ),
+        ],
       ),
     );
   }
@@ -616,51 +621,43 @@ class _Tile extends StatelessWidget {
 class _ChoicePill extends StatelessWidget {
   const _ChoicePill({
     required this.selected,
-    required this.icon,
+    required this.glyph,
     required this.label,
     required this.onTap,
   });
 
   final bool selected;
-  final IconData icon;
+  final VouchGlyph glyph;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
-    final fg = selected ? style.pillInk : style.ink;
-
-    return GestureDetector(
+    final theme = VouchScope.of(context);
+    final foreground = selected ? theme.canvas : theme.ink;
+    return Pressable(
       onTap: onTap,
+      scale: 0.96,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: VouchDurations.fast,
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
         decoration: BoxDecoration(
-          color: selected ? style.pill : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
+          color: selected ? theme.ink : const Color(0x00000000),
+          borderRadius: BorderRadius.circular(VouchRadius.pill),
           border: Border.all(
-            color: selected ? style.pill : style.ink.withValues(alpha: 0.4),
-            width: 1.2,
+            color: selected ? theme.ink : theme.lineStrong,
+            width: 1,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 15, color: fg),
+            VouchIcon(glyph, size: 15, color: foreground),
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'InstrumentSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: fg,
-                fontVariations: const <FontVariation>[
-                  FontVariation('wght', 600),
-                ],
-              ),
+              style: VouchType.bodyStrong(foreground).copyWith(fontSize: 13),
             ),
           ],
         ),
@@ -711,17 +708,15 @@ class _PhoneSheetState extends State<_PhoneSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
-    return SheetFrame(
+    final theme = VouchScope.of(context);
+    return VouchSheet(
       title: 'Your phone number',
       subtitle:
           'Only your partner sees it. It powers the call, WhatsApp and SMS shortcuts.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          TextField(
+          VouchField(
             controller: _phone,
             autofocus: true,
             keyboardType: TextInputType.phone,
@@ -729,42 +724,39 @@ class _PhoneSheetState extends State<_PhoneSheet> {
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s()-]')),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Phone (optional)',
-              hintText: '+234 801 234 5678',
-              prefixIcon: Icon(Icons.phone_rounded),
+            hint: '+234 801 234 5678',
+            label: 'Phone (optional)',
+            prefix: VouchIcon(
+              VouchGlyph.phone,
+              size: 17,
+              color: theme.faint,
             ),
           ),
           if (_error != null) ...<Widget>[
+            const SizedBox(height: VouchSpace.x2),
             Text(
               _error!,
-              style: text.bodySmall?.copyWith(color: scheme.error),
+              style: VouchType.caption(theme.missed),
             ),
-            const SizedBox(height: 8),
           ],
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: VouchLoader(size: 22),
-                    )
-                  : const Text('Save number'),
-            ),
+          const SizedBox(height: VouchSpace.x4),
+          VouchButton(
+            label: 'Save number',
+            expand: true,
+            loading: _saving,
+            onPressed: _saving ? null : _save,
           ),
-          const SizedBox(height: 8),
-          TextButton(
+          const SizedBox(height: VouchSpace.x2),
+          VouchButton(
+            label: 'Remove number',
+            style: VouchButtonStyle.ghost,
+            expand: true,
             onPressed: _saving
                 ? null
                 : () async {
                     _phone.clear();
                     await _save();
                   },
-            child: const Text('Remove number'),
           ),
         ],
       ),
