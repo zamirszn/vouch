@@ -52,13 +52,18 @@ class WeekStrip extends StatelessWidget {
                       isToday: dayKey(day.date) == todayKeyValue,
                     ),
                     const SizedBox(height: 7),
-                    Text(
-                      '${day.date.day}',
-                      style: VouchType.mono(
-                        dayKey(day.date) == todayKeyValue
-                            ? theme.ink
-                            : theme.faint,
-                        size: 10,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${day.date.day}',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: VouchType.mono(
+                          dayKey(day.date) == todayKeyValue
+                              ? theme.ink
+                              : theme.faint,
+                          size: 10,
+                        ),
                       ),
                     ),
                   ],

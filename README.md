@@ -99,7 +99,8 @@ flutter test
 Coverage includes day-key/date maths, schedule occurrence generation, streak
 and completion calculations, Firestore model parsing, and a full demo-mode
 widget flow (owner home → settings → witness side → mark sheet), plus a
-component-gallery render test and a reduced-motion pass.
+component-gallery render test, a reduced-motion pass, and 360 dp layout passes
+over the owner, witness and schedule screens.
 
 ### Component gallery
 

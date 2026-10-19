@@ -1,6 +1,8 @@
 /// Staggered entrance used by page sections.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:motor/motor.dart';
 
@@ -24,14 +26,21 @@ class Reveal extends StatefulWidget {
 
 class _RevealState extends State<Reveal> {
   bool _shown = false;
+  Timer? _delay;
 
   @override
   void initState() {
     super.initState();
     final delay = Duration(milliseconds: 50 + widget.index * 70);
-    Future<void>.delayed(delay, () {
+    _delay = Timer(delay, () {
       if (mounted) setState(() => _shown = true);
     });
+  }
+
+  @override
+  void dispose() {
+    _delay?.cancel();
+    super.dispose();
   }
 
   @override

@@ -56,9 +56,14 @@ class StatusChip extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(
-            label.toUpperCase(),
-            style: VouchType.label(color, size: 9).copyWith(letterSpacing: 1.2),
+          Flexible(
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  VouchType.label(color, size: 9).copyWith(letterSpacing: 1.2),
+            ),
           ),
         ],
       ),

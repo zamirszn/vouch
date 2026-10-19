@@ -744,12 +744,17 @@ class _OwnerHomeState extends State<_OwnerHome> {
                       style: VouchType.body(theme.muted)
                           .copyWith(fontSize: 15),
                     ),
-                    const Spacer(),
-                    Text(
-                      schedule == null
-                          ? 'NO CLOCK'
-                          : '${schedule.kind.shortLabel.toUpperCase()} / ${schedule.clockLabel.toUpperCase()}',
-                      style: VouchType.label(theme.faint, size: 8.5),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        schedule == null
+                            ? 'NO CLOCK'
+                            : '${schedule.kind.shortLabel.toUpperCase()} / ${schedule.clockLabel.toUpperCase()}',
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: VouchType.label(theme.faint, size: 8.5),
+                      ),
                     ),
                   ],
                 ),
