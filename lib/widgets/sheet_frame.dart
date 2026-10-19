@@ -1,14 +1,11 @@
-/// Shared bottom-sheet chrome.
+/// Shared bottom-sheet chrome, printed like a small poster sheet.
 library;
 
 import 'package:flutter/material.dart';
 
-import '../theme/vouch_theme.dart';
+import 'poster.dart';
 
-Future<T?> showVouchSheet<T>(
-  BuildContext context,
-  Widget child,
-) {
+Future<T?> showVouchSheet<T>(BuildContext context, Widget child) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
@@ -44,8 +41,7 @@ class SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(22, 10, 22, 28),
@@ -58,7 +54,7 @@ class SheetFrame extends StatelessWidget {
               width: 38,
               height: 4,
               decoration: BoxDecoration(
-                color: scheme.onSurface.withValues(alpha: 0.22),
+                color: style.ink.withValues(alpha: 0.22),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -77,19 +73,30 @@ class SheetFrame extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       title,
-                      style: text.headlineSmall?.copyWith(
-                        fontSize: 26,
-                        height: 1.02,
-                        letterSpacing: -0.8,
+                      style: TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        height: 0.98,
+                        letterSpacing: -1.2,
+                        color: style.ink,
+                        fontVariations: const <FontVariation>[
+                          FontVariation('wght', 700),
+                          FontVariation('wdth', 94),
+                        ],
                       ),
                     ),
                     if (subtitle != null) ...<Widget>[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 7),
                       Text(
                         subtitle!,
-                        style: text.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'InstrumentSans',
+                          fontSize: 12.5,
                           height: 1.4,
+                          color: style.muted,
                         ),
                       ),
                     ],
@@ -102,7 +109,7 @@ class SheetFrame extends StatelessWidget {
           child,
           if (actions != null && actions!.isNotEmpty) ...<Widget>[
             const SizedBox(height: 22),
-            const Divider(),
+            Divider(height: 1, color: style.line),
             const SizedBox(height: 14),
             for (final action in actions!) ...[
               action,
@@ -123,28 +130,29 @@ class SheetNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final body = Theme.of(context).textTheme.bodySmall;
+    final style = PosterStyle.of(context);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: scheme.brightness == Brightness.dark
-            ? scheme.surfaceContainerHigh
-            : VouchColors.cream,
+        color: style.soft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: scheme.onSurface.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: style.line),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 17, color: VouchColors.indigo),
+          Icon(icon, size: 16, color: style.ink),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: body?.copyWith(color: scheme.onSurfaceVariant, height: 1.45),
+              style: TextStyle(
+                fontFamily: 'InstrumentSans',
+                fontSize: 11.5,
+                height: 1.45,
+                color: style.muted,
+              ),
             ),
           ),
         ],

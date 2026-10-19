@@ -7,8 +7,7 @@ import 'dart:math' as math;
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 
-import '../theme/vouch_theme.dart';
-import 'soul.dart';
+import 'poster.dart';
 
 Future<void> showCelebration(
   BuildContext context, {
@@ -79,9 +78,6 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
     return Stack(
       alignment: Alignment.topCenter,
       children: <Widget>[
@@ -95,81 +91,82 @@ class _CelebrationOverlayState extends State<CelebrationOverlay> {
           minBlastForce: 8,
           gravity: 0.16,
           colors: const <Color>[
-            VouchColors.indigo,
-            VouchColors.coral,
-            VouchColors.lime,
-            VouchColors.kept,
-            VouchColors.cream,
+            PosterColors.acid,
+            PosterColors.cobalt,
+            PosterColors.coral,
+            PosterColors.kelly,
+            PosterColors.cream,
           ],
         ),
         Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Material(
               color: Colors.transparent,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(26, 30, 26, 22),
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
                 decoration: BoxDecoration(
-                  color: scheme.brightness == Brightness.dark
-                      ? scheme.surfaceContainerHigh
-                      : VouchColors.cream,
+                  color: PosterColors.ink,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: scheme.onSurface.withValues(alpha: 0.8),
-                    width: 1.3,
+                    color: PosterColors.cream.withValues(alpha: 0.16),
                   ),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: scheme.shadow.withValues(alpha: 0.28),
-                      offset: const Offset(6, 6),
-                      blurRadius: 0,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      width: 78,
+                      height: 78,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: PosterColors.acid,
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: PosterColors.ink,
+                        size: 44,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 29,
+                        fontWeight: FontWeight.w700,
+                        height: 0.98,
+                        letterSpacing: -1.2,
+                        color: PosterColors.cream,
+                        fontVariations: <FontVariation>[
+                          FontVariation('wght', 700),
+                          FontVariation('wdth', 94),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.message,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 13,
+                        height: 1.45,
+                        color: PosterColors.cream.withValues(alpha: 0.66),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    PosterPill(
+                      label: 'Keep going',
+                      height: 52,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      color: PosterColors.cream,
+                      foreground: PosterColors.ink,
+                      arrowColor: PosterColors.acid,
+                      arrowForeground: PosterColors.ink,
                     ),
                   ],
-                ),
-                child: CropMarks(
-                  inset: 7,
-                  length: 12,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Container(
-                        width: 82,
-                        height: 82,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: VouchColors.ink,
-                        ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          color: VouchColors.lime,
-                          size: 46,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        widget.title,
-                        textAlign: TextAlign.center,
-                        style: text.headlineLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.message,
-                        textAlign: TextAlign.center,
-                        style: text.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () => Navigator.of(context).maybePop(),
-                          child: const Text('Keep going'),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),

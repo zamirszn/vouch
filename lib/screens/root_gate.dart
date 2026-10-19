@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 
 import '../state/auth_controller.dart';
 import '../state/track_controller.dart';
-import '../widgets/animated_background.dart';
-import '../widgets/brand_mark.dart';
+import '../widgets/poster.dart';
+import '../widgets/pressable_spring.dart';
 import 'auth_screen.dart';
 import 'home_shell.dart';
 import 'onboarding_screen.dart';
@@ -75,64 +75,74 @@ class _BootError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(26),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const BrandMark(size: 88),
-                const SizedBox(height: 26),
-                Text(
-                  'Vouch could not\nreach the promise.',
-                  textAlign: TextAlign.center,
-                  style: text.displaySmall?.copyWith(
-                    fontSize: 34,
-                    height: 1.08,
+      body: PosterField(
+        tone: PosterTone.flame,
+        child: Builder(
+          builder: (context) {
+            final style = PosterStyle.of(context);
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const PosterTopBar(right: '(000) / boot'),
+                  const Spacer(),
+                  const PosterHeadline(
+                    'Vouch could not\nreach the promise.',
+                    size: 38,
+                    accentTail: 2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: text.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.45,
+                  const SizedBox(height: 14),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 13.5,
+                      height: 1.45,
+                      color: style.muted,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
+                  const SizedBox(height: 24),
+                  PosterPill(
+                    label: 'Try again',
+                    icon: Icons.refresh_rounded,
+                    color: PosterColors.cream,
+                    foreground: PosterColors.ink,
+                    arrowColor: PosterColors.coral,
+                    arrowForeground: PosterColors.cream,
                     onPressed: onRetry,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Try again'),
                   ),
-                ),
-                if (onSignOut != null) ...<Widget>[
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: onSignOut,
-                    child: const Text('Sign out'),
+                  if (onSignOut != null) ...<Widget>[
+                    const SizedBox(height: 8),
+                    PressableSpring(
+                      onTap: onSignOut,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: PosterLabel('Sign out', color: style.ink),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'If this keeps happening, check that this phone is online and that the Firestore rules are deployed.',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 11,
+                      height: 1.45,
+                      color: style.muted,
+                    ),
+                  ),
+                  const Spacer(),
+                  const PosterFooter(
+                    lead: 'Vouch',
+                    muted: 'The promise is still there.',
                   ),
                 ],
-                const SizedBox(height: 8),
-                Text(
-                  'If this keeps happening, check that this phone is online and that the Firestore rules are deployed.',
-                  textAlign: TextAlign.center,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

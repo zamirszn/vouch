@@ -1,4 +1,5 @@
 /// The partner chooses days, time and timezone; the owner sees a waiting state.
+/// Both are printed on sage.
 library;
 
 import 'package:flutter/material.dart';
@@ -11,13 +12,10 @@ import '../models/schedule.dart';
 import '../models/track.dart';
 import '../services/notification_service.dart';
 import '../state/track_controller.dart';
-import '../theme/vouch_theme.dart';
-import '../widgets/animated_background.dart';
 import '../widgets/contact_sheet.dart';
+import '../widgets/poster.dart';
 import '../widgets/pressable_spring.dart';
-import '../widgets/section_header.dart';
 import '../widgets/sheet_frame.dart';
-import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
 import '../widgets/vouch_loader.dart';
 
@@ -47,8 +45,8 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
     _time = schedule == null
         ? const TimeOfDay(hour: 19, minute: 30)
         : TimeOfDay(hour: schedule.hour, minute: schedule.minute);
-    _timeZone = schedule?.timeZone ??
-        context.read<NotificationService>().localTimeZone;
+    _timeZone =
+        schedule?.timeZone ?? context.read<NotificationService>().localTimeZone;
   }
 
   Future<void> _pickTime() async {
@@ -118,15 +116,16 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
     final track = controller.track;
     if (track == null) {
       return const Scaffold(
-        body: Center(child: VouchLoader(size: 22)),
+        body: PosterField(
+          tone: PosterTone.sage,
+          child: Center(child: VouchLoader(size: 22, color: PosterColors.ink)),
+        ),
       );
     }
     if (!controller.isPartner) {
       return _OwnerWaiting(track: track);
     }
 
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final schedule = VouchSchedule(
       kind: _kind,
       hour: _time.hour,
@@ -134,51 +133,44 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
       timeZone: _timeZone,
     );
     final next = nextReminderAt(schedule);
+    final canPop = Navigator.of(context).canPop();
 
     return Scaffold(
-      body: AnimatedBackground(
-        intensity: 0.8,
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 6, 22, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    if (Navigator.of(context).canPop())
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded),
-                      )
-                    else
-                      const SizedBox(width: 48),
-                    const Spacer(),
-                    Text(
-                      '(003) / THE RHYTHM',
-                      style: text.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        letterSpacing: 1.4,
-                      ),
+      body: PosterField(
+        tone: PosterTone.sage,
+        child: Builder(
+          builder: (context) {
+            final style = PosterStyle.of(context);
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (canPop)
+                    const PosterBackBar(
+                      right: '(003) / the rhythm',
+                      icon: Icons.close_rounded,
+                    )
+                  else
+                    const PosterTopBar(right: '(003) / the rhythm'),
+                  const SizedBox(height: 28),
+                  PosterHeadline('Set the\nrhythm.', size: 46, accentTail: 1),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Witnessing ${track.ownerFirstName}’s promise. Both phones buzz together.',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 14,
+                      height: 1.4,
+                      color: style.muted,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                PageHeader(
-                  eyebrow: 'Witness duty',
-                  title: 'Set the',
-                  titleMuted: 'rhythm.',
-                  subtitle:
-                      'Witnessing ${track.ownerFirstName}’s promise. Both phones buzz together.',
-                  titleSize: 44,
-                ),
-                const SizedBox(height: 24),
-                InkCard(
-                  color: VouchColors.indigo,
-                  border: false,
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                  child: CropMarks(
-                    color: VouchColors.cream.withValues(alpha: 0.35),
+                  ),
+                  const SizedBox(height: 24),
+                  PosterCard(
+                    color: PosterColors.cobalt,
+                    foreground: PosterColors.cream,
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -192,22 +184,25 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text(
-                                'THE PROMISE',
-                                style: text.labelSmall?.copyWith(
-                                  color: VouchColors.cream.withValues(
-                                    alpha: 0.62,
-                                  ),
-                                  letterSpacing: 1.6,
-                                  fontSize: 9,
+                              PosterLabel(
+                                'The promise',
+                                color: PosterColors.cream.withValues(
+                                  alpha: 0.62,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Text(
                                 track.promise,
-                                style: text.titleMedium?.copyWith(
-                                  color: VouchColors.cream,
-                                  height: 1.25,
+                                style: const TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                  letterSpacing: -0.2,
+                                  color: PosterColors.cream,
+                                  fontVariations: <FontVariation>[
+                                    FontVariation('wght', 600),
+                                  ],
                                 ),
                               ),
                             ],
@@ -216,161 +211,203 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 28),
-                const SectionHeader(
-                  index: '01',
-                  title: 'Which days?',
-                  subtitle: 'The same pattern on both phones.',
-                ),
-                Row(
-                  children: <Widget>[
-                    for (final kind in ScheduleKind.values) ...<Widget>[
-                      Expanded(
-                        child: _KindCard(
-                          kind: kind,
-                          selected: _kind == kind,
-                          onTap: () => setState(() => _kind = kind),
+                  const SizedBox(height: 26),
+                  const PosterSectionLabel(
+                    '01',
+                    'Which days?',
+                    uppercase: false,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: <Widget>[
+                      for (final kind in ScheduleKind.values) ...<Widget>[
+                        Expanded(
+                          child: _KindCard(
+                            kind: kind,
+                            selected: _kind == kind,
+                            onTap: () => setState(() => _kind = kind),
+                          ),
                         ),
-                      ),
-                      if (kind != ScheduleKind.values.last)
-                        const SizedBox(width: 8),
+                        if (kind != ScheduleKind.values.last)
+                          const SizedBox(width: 8),
+                      ],
                     ],
+                  ),
+                  const SizedBox(height: 26),
+                  const PosterSectionLabel(
+                    '02',
+                    'What time?',
+                    uppercase: false,
+                  ),
+                  const SizedBox(height: 10),
+                  PosterCard(
+                    onTap: _pickTime,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              PosterLabel(
+                                'Reminder · both phones',
+                                color: style.cardMuted,
+                                size: 8.5,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _time.format(context),
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w700,
+                                  height: 0.95,
+                                  letterSpacing: -1.6,
+                                  color: style.cardInk,
+                                  fontVariations: const <FontVariation>[
+                                    FontVariation('wght', 700),
+                                    FontVariation('wdth', 94),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _RoundArrow(
+                          color: style.cardInk,
+                          foreground: style.card,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  PosterCard(
+                    onTap: _pickTimeZone,
+                    padding: const EdgeInsets.fromLTRB(16, 13, 10, 13),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              PosterLabel(
+                                'Timezone',
+                                color: style.cardMuted,
+                                size: 8.5,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _timeZone.replaceAll('_', ' '),
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.2,
+                                  color: style.cardInk,
+                                  fontVariations: const <FontVariation>[
+                                    FontVariation('wght', 600),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${DateTime.now().timeZoneName} on this phone',
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 11.5,
+                                  color: style.cardMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _RoundArrow(
+                          color: style.soft,
+                          foreground: style.cardInk,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PosterCard(
+                    color: style.pill,
+                    foreground: style.pillInk,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: style.dark
+                                ? PosterColors.cobalt
+                                : PosterColors.acid,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                next == null
+                                    ? 'No upcoming reminder'
+                                    : 'NEXT · ${DateFormat('EEE d MMM · h:mm a').format(next).toUpperCase()}',
+                                style: TextStyle(
+                                  fontFamily: 'SpaceMono',
+                                  fontSize: 9,
+                                  letterSpacing: 1.1,
+                                  color: style.pillInk.withValues(alpha: 0.72),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                'Both phones buzz in ${_timeZone.replaceAll('_', ' ')}.',
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                  color: style.pillInk,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: style.dark
+                            ? PosterColors.coral
+                            : const Color(0xFF8E2A22),
+                      ),
+                    ),
                   ],
-                ),
-                const SizedBox(height: 28),
-                const SectionHeader(index: '02', title: 'What time?'),
-                InkCard(
-                  onTap: _pickTime,
-                  padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'REMINDER · BOTH PHONES',
-                              style: text.labelSmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                                letterSpacing: 1.4,
-                                fontSize: 9,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _time.format(context),
-                              style: text.displaySmall?.copyWith(
-                                fontSize: 36,
-                                height: 0.95,
-                                letterSpacing: -1.6,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _RoundArrow(color: VouchColors.indigo),
-                    ],
+                  const SizedBox(height: 22),
+                  PosterPill(
+                    label: _saving
+                        ? 'Saving…'
+                        : track.schedule == null
+                        ? 'Activate the promise'
+                        : 'Update the schedule',
+                    onPressed: _saving ? null : _save,
                   ),
-                ),
-                const SizedBox(height: 10),
-                InkCard(
-                  onTap: _pickTimeZone,
-                  padding: const EdgeInsets.fromLTRB(18, 15, 16, 15),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'TIMEZONE',
-                              style: text.labelSmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                                letterSpacing: 1.4,
-                                fontSize: 9,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _timeZone.replaceAll('_', ' '),
-                              style: text.titleMedium,
-                            ),
-                            Text(
-                              '${DateTime.now().timeZoneName} on this phone',
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _RoundArrow(color: VouchColors.mist),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                InkCard(
-                  color: VouchColors.ink,
-                  border: false,
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: VouchColors.lime,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              next == null
-                                  ? 'No upcoming reminder'
-                                  : 'NEXT · ${DateFormat('EEE d MMM · h:mm a').format(next).toUpperCase()}',
-                              style: text.labelSmall?.copyWith(
-                                color: VouchColors.cream.withValues(alpha: 0.72),
-                                letterSpacing: 1.1,
-                                fontSize: 9.5,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Both phones buzz in ${_timeZone.replaceAll('_', ' ')}.',
-                              style: text.bodySmall?.copyWith(
-                                color: VouchColors.cream,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_error != null) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: text.bodyMedium?.copyWith(color: scheme.error),
+                  const SizedBox(height: 22),
+                  const PosterFooter(
+                    lead: 'Witness, not judge.',
+                    muted: 'You set the rhythm together.',
                   ),
                 ],
-                const SizedBox(height: 22),
-                SoulButton(
-                  label: _saving
-                      ? 'Saving…'
-                      : track.schedule == null
-                          ? 'Activate the promise'
-                          : 'Update the schedule',
-                  onPressed: _saving ? null : _save,
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -378,9 +415,10 @@ class _ScheduleSetupScreenState extends State<ScheduleSetupScreen> {
 }
 
 class _RoundArrow extends StatelessWidget {
-  const _RoundArrow({required this.color});
+  const _RoundArrow({required this.color, required this.foreground});
 
   final Color color;
+  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
@@ -388,11 +426,7 @@ class _RoundArrow extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      child: const Icon(
-        Icons.arrow_outward_rounded,
-        color: VouchColors.cream,
-        size: 19,
-      ),
+      child: Icon(Icons.arrow_outward_rounded, color: foreground, size: 19),
     );
   }
 }
@@ -404,113 +438,162 @@ class _OwnerWaiting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final controller = context.watch<TrackController>();
 
     return Scaffold(
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                PageHeader(
-                  eyebrow: 'Witness duty',
-                  title: '${track.partnerFirstName} is',
-                  titleMuted: 'setting the rhythm.',
-                  index: '(003)',
-                  subtitle:
-                      'They choose the days and the time. Then both phones start reminding together.',
-                  titleSize: 40,
-                ),
-                const SizedBox(height: 26),
-                InkCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          VouchAvatar(
-                            name: track.partnerName ?? 'Partner',
-                            photoUrl: track.partnerPhotoUrl,
-                            size: 44,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  track.partnerName ?? 'Your partner',
-                                  style: text.titleMedium,
-                                ),
-                                Text(
-                                  'Choosing the days',
-                                  style: text.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+      body: PosterField(
+        tone: PosterTone.sage,
+        child: Builder(
+          builder: (context) {
+            final style = PosterStyle.of(context);
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const PosterTopBar(right: '(003) / the rhythm'),
+                  const SizedBox(height: 28),
+                  PosterHeadline(
+                    '${track.partnerFirstName} is\nsetting the rhythm.',
+                    size: 40,
+                    accentTail: 1,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'They choose the days and the time. Then both phones start reminding together.',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 14,
+                      height: 1.4,
+                      color: style.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  PosterCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            VouchAvatar(
+                              name: track.partnerName ?? 'Partner',
+                              photoUrl: track.partnerPhotoUrl,
+                              size: 44,
                             ),
-                          ),
-                          LetterBadge(
-                            letter: '?',
-                            color: VouchColors.lime,
-                            foreground: VouchColors.ink,
-                            size: 34,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const DashRule(),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: <Widget>[
-                          Container(
-                            width: 6,
-                            height: 6,
-                            color: VouchColors.coral,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Nothing buzzes until the rhythm is set.',
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    track.partnerName ?? 'Your partner',
+                                    style: TextStyle(
+                                      fontFamily: 'InstrumentSans',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.3,
+                                      color: style.cardInk,
+                                      fontVariations: const <FontVariation>[
+                                        FontVariation('wght', 600),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    'Choosing the days',
+                                    style: TextStyle(
+                                      fontFamily: 'InstrumentSans',
+                                      fontSize: 12,
+                                      color: style.cardMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
+                            Container(
+                              width: 36,
+                              height: 36,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: PosterColors.acid,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Text(
+                                '?',
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: PosterColors.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Divider(height: 1, color: style.line),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: <Widget>[
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: PosterColors.coral,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Nothing buzzes until the rhythm is set.',
+                                style: TextStyle(
+                                  fontFamily: 'InstrumentSans',
+                                  fontSize: 12,
+                                  color: style.cardMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PosterPill(
+                    label: 'Message ${track.partnerFirstName}',
+                    compact: true,
+                    expand: false,
+                    height: 52,
+                    onPressed: () => showContactSheet(
+                      context,
+                      name: track.partnerFirstName,
+                      phone: track.partnerPhone,
+                      message:
+                          'Hey ${track.partnerFirstName}, can you set our Vouch schedule when you get a minute?',
+                    ),
+                  ),
+                  if (controller.error != null) ...<Widget>[
+                    const SizedBox(height: 14),
+                    Text(
+                      controller.error!,
+                      style: const TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 12,
+                        color: Color(0xFF8E2A22),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SoulButton(
-                  label: 'Message ${track.partnerFirstName}',
-                  compact: true,
-                  expand: false,
-                  height: 52,
-                  onPressed: () => showContactSheet(
-                    context,
-                    name: track.partnerFirstName,
-                    phone: track.partnerPhone,
-                    message:
-                        'Hey ${track.partnerFirstName}, can you set our Vouch schedule when you get a minute?',
-                  ),
-                ),
-                if (controller.error != null) ...<Widget>[
-                  const SizedBox(height: 14),
-                  Text(
-                    controller.error!,
-                    style: text.bodySmall?.copyWith(color: scheme.error),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  const PosterFooter(
+                    lead: 'Witness, not judge.',
+                    muted: 'The rhythm is their call.',
                   ),
                 ],
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -530,10 +613,11 @@ class _KindCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? VouchColors.cream : scheme.onSurface;
-    final accent = selected ? VouchColors.lime : VouchColors.indigo;
+    final style = PosterStyle.of(context);
+    final fg = selected ? style.pillInk : style.cardInk;
+    final accent = selected
+        ? (style.dark ? PosterColors.cobalt : PosterColors.acid)
+        : PosterColors.cobalt;
     // 1 Jan 2024 was a Monday, so this walks the week from Mon to Sun.
     final week = <DateTime>[
       for (var i = 0; i < 7; i++) DateTime(2024, 1, 1 + i),
@@ -548,23 +632,12 @@ class _KindCard extends StatelessWidget {
         height: 104,
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
         decoration: BoxDecoration(
-          color: selected ? VouchColors.ink : VouchColors.cream,
-          borderRadius: BorderRadius.circular(18),
+          color: selected ? style.pill : style.card,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected
-                ? VouchColors.ink
-                : scheme.onSurface.withValues(alpha: 0.14),
-            width: 1.2,
+            color: selected ? style.pill : style.line,
+            width: 1,
           ),
-          boxShadow: selected
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: scheme.shadow.withValues(alpha: 0.2),
-                    offset: const Offset(3, 3),
-                    blurRadius: 0,
-                  ),
-                ]
-              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,9 +649,7 @@ class _KindCard extends StatelessWidget {
                   for (final day in week) ...<Widget>[
                     Container(
                       width: 3,
-                      height: kind.includes(day)
-                          ? 22
-                          : 10,
+                      height: kind.includes(day) ? 22 : 10,
                       color: kind.includes(day)
                           ? accent
                           : fg.withValues(alpha: 0.22),
@@ -592,15 +663,25 @@ class _KindCard extends StatelessWidget {
             Text(
               kind.shortLabel,
               maxLines: 1,
-              style: text.titleSmall?.copyWith(color: fg, fontSize: 13),
+              style: TextStyle(
+                fontFamily: 'InstrumentSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+                color: fg,
+                fontVariations: const <FontVariation>[
+                  FontVariation('wght', 600),
+                ],
+              ),
             ),
             const SizedBox(height: 1),
             Text(
               '${week.where(kind.includes).length} days',
-              style: text.labelSmall?.copyWith(
-                color: fg.withValues(alpha: 0.55),
+              style: TextStyle(
+                fontFamily: 'SpaceMono',
                 fontSize: 8.5,
                 letterSpacing: 0.8,
+                color: fg.withValues(alpha: 0.55),
               ),
             ),
           ],
@@ -635,7 +716,6 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
     final zones = widget.zones
         .where((zone) => zone.toLowerCase().contains(_query.toLowerCase()))
         .toList();
-    final text = Theme.of(context).textTheme;
 
     return SheetFrame(
       title: 'Timezone',
@@ -670,7 +750,7 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: VouchColors.indigo,
+                            color: PosterColors.cobalt,
                             shape: BoxShape.circle,
                           ),
                         )
@@ -685,7 +765,11 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'No timezone matches “$_query”.',
-                style: text.bodyMedium,
+                style: const TextStyle(
+                  fontFamily: 'InstrumentSans',
+                  fontSize: 13,
+                  color: PosterColors.ink,
+                ),
               ),
             ),
         ],

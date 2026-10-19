@@ -1,12 +1,11 @@
-/// Branded bootstrap screen.
+/// Branded bootstrap screen: an ink poster with the wordmark set enormous
+/// and one acid line beneath it.
 library;
 
 import 'package:flutter/material.dart';
 
 import '../core/constants.dart';
-import '../theme/vouch_theme.dart';
-import '../widgets/animated_background.dart';
-import '../widgets/brand_mark.dart';
+import '../widgets/poster.dart';
 import '../widgets/vouch_loader.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -14,75 +13,61 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      body: AnimatedBackground(
-        intensity: 1.2,
-        child: SafeArea(
-          child: Stack(
+      body: PosterField(
+        tone: PosterTone.ink,
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const BrandMark(size: 112),
-                    const SizedBox(height: 30),
-                    Text(
-                      VouchConfig.appName,
-                      style: text.displayLarge?.copyWith(
-                        fontSize: 58,
-                        height: 0.9,
-                        letterSpacing: -3,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Container(
-                          width: 26,
-                          height: 1,
-                          color: scheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          VouchConfig.tagline.toUpperCase(),
-                          style: text.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            letterSpacing: 1.6,
-                            fontSize: 9,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 26,
-                          height: 1,
-                          color: scheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 46),
-                    const SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: VouchLoader(size: 22),
-                    ),
-                  ],
+              const PosterTopBar(right: '(EST. MMXXVI)'),
+              const Spacer(),
+              const PosterLabel('A small deal', size: 8.5),
+              const SizedBox(height: 14),
+              const PosterHeadline(
+                VouchConfig.appName,
+                size: 104,
+                height: 0.8,
+                color: PosterColors.cream,
+              ),
+              const SizedBox(height: 8),
+              const PosterHeadline(
+                'one promise.',
+                size: 34,
+                height: 0.95,
+                color: PosterColors.acid,
+              ),
+              const SizedBox(height: 22),
+              Container(
+                width: 56,
+                height: 2,
+                color: PosterColors.cream.withValues(alpha: 0.4),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                VouchConfig.tagline,
+                style: TextStyle(
+                  fontFamily: 'InstrumentSans',
+                  fontSize: 15,
+                  height: 1.4,
+                  color: PosterColors.cream.withValues(alpha: 0.62),
                 ),
               ),
-              Positioned(
-                left: 24,
-                bottom: 24,
-                child: Text(
-                  '(EST. MMXXVI)',
-                  style: text.labelSmall?.copyWith(
-                    color: VouchColors.mist,
-                    fontSize: 9,
-                    letterSpacing: 1.2,
+              const Spacer(),
+              Row(
+                children: <Widget>[
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: VouchLoader(size: 18, color: PosterColors.acid),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  const PosterLabel('Syncing', color: PosterColors.acid),
+                  const Spacer(),
+                  const PosterLabel('V.01'),
+                ],
               ),
             ],
           ),

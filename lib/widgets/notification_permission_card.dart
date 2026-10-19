@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/notification_service.dart';
-import '../theme/vouch_theme.dart';
-import 'pressable_spring.dart';
-import 'section_header.dart';
+import 'poster.dart';
 
 class NotificationPermissionCard extends StatefulWidget {
   const NotificationPermissionCard({super.key});
@@ -54,13 +52,11 @@ class _NotificationPermissionCardState
       return const SizedBox.shrink();
     }
 
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final exactOnly = status.notificationsEnabled && !status.exactAlarmsAllowed;
 
-    return ExpressiveCard(
-      color: VouchColors.coral.withValues(alpha: 0.10),
-      padding: const EdgeInsets.all(18),
+    return PosterCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -68,55 +64,55 @@ class _NotificationPermissionCardState
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: VouchColors.coral,
-              borderRadius: BorderRadius.circular(8),
+              color: PosterColors.coral,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.notifications_active_outlined,
-              color: VouchColors.cream,
+              color: PosterColors.cream,
               size: 20,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  exactOnly
-                      ? 'Allow exact reminders'
-                      : 'Turn on reminders',
-                  style: text.titleMedium,
+                  exactOnly ? 'Allow exact reminders' : 'Turn on reminders',
+                  style: TextStyle(
+                    fontFamily: 'InstrumentSans',
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                    color: style.cardInk,
+                    fontVariations: const <FontVariation>[
+                      FontVariation('wght', 600),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   exactOnly
                       ? 'Android may deliver reminders late until exact alarms are allowed.'
                       : 'Android needs permission before Vouch can nudge you.',
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  style: TextStyle(
+                    fontFamily: 'InstrumentSans',
+                    fontSize: 11.5,
+                    height: 1.4,
+                    color: style.cardMuted,
                   ),
                 ),
                 const SizedBox(height: 12),
-                PressableSpring(
-                  onTap: _asking ? null : _enable,
-                  enabled: !_asking,
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: VouchColors.ink,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      _asking ? 'Opening…' : 'Allow',
-                      style: text.labelMedium?.copyWith(
-                        color: VouchColors.cream,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                PosterPill(
+                  label: _asking ? 'Opening…' : 'Allow',
+                  compact: true,
+                  expand: false,
+                  arrow: false,
+                  height: 38,
+                  color: style.pill,
+                  foreground: style.pillInk,
+                  onPressed: _asking ? null : _enable,
                 ),
               ],
             ),

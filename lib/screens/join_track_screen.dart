@@ -8,13 +8,9 @@ import 'package:provider/provider.dart';
 import '../core/constants.dart';
 import '../models/track.dart';
 import '../state/track_controller.dart';
-import '../theme/vouch_theme.dart';
-import '../widgets/animated_background.dart';
+import '../widgets/poster.dart';
 import '../widgets/reveal.dart';
-import '../widgets/section_header.dart';
-import '../widgets/soul.dart';
 import '../widgets/vouch_avatar.dart';
-import '../widgets/vouch_loader.dart';
 
 class JoinTrackScreen extends StatefulWidget {
   const JoinTrackScreen({super.key});
@@ -39,7 +35,10 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
   Future<void> _find() async {
     final code = _code.text.trim().toUpperCase();
     if (code.length != VouchConfig.inviteLength) {
-      setState(() => _error = 'Enter the full ${VouchConfig.inviteLength}-character code.');
+      setState(
+        () => _error =
+            'Enter the full ${VouchConfig.inviteLength}-character code.',
+      );
       return;
     }
     FocusScope.of(context).unfocus();
@@ -54,7 +53,8 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
       if (preview == null) {
         setState(() {
           _looking = false;
-          _error = 'No promise matches that code. Check the letters and digits.';
+          _error =
+              'No promise matches that code. Check the letters and digits.';
         });
         return;
       }
@@ -102,143 +102,119 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final preview = _preview;
 
     return Scaffold(
-      body: AnimatedBackground(
-        intensity: 0.8,
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_rounded),
+      body: PosterField(
+        tone: PosterTone.cream,
+        child: Builder(
+          builder: (context) {
+            final style = PosterStyle.of(context);
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const PosterBackBar(right: '(002)'),
+                  const SizedBox(height: 30),
+                  const Reveal(
+                    child: PosterHeadline(
+                      'Got a\ncode?',
+                      size: 46,
+                      accentTail: 1,
                     ),
-                    const Spacer(),
-                    Text(
-                      'PARTNER',
-                      style: text.labelSmall?.copyWith(
-                        color: VouchColors.coral,
-                        letterSpacing: 1.4,
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Enter the 8-character code from your person.',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 14,
+                      height: 1.4,
+                      color: style.muted,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                Reveal(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Got a',
-                        style: text.displaySmall?.copyWith(
-                          fontSize: 44,
-                          height: 0.94,
-                          letterSpacing: -2,
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 500),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        'code?',
-                        style: text.displaySmall?.copyWith(
-                          fontSize: 44,
-                          height: 0.94,
-                          letterSpacing: -2,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 26),
+                  const PosterSectionLabel('01', 'the invite'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _code,
+                    maxLength: VouchConfig.inviteLength,
+                    textCapitalization: TextCapitalization.characters,
+                    autofocus: true,
+                    textAlign: TextAlign.center,
+                    style: text.headlineMedium?.copyWith(
+                      letterSpacing: 5,
+                      color: PosterColors.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                      _UpperCaseFormatter(),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Enter the 8-character code from your person.',
-                  style: text.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 26),
-                TextField(
-                  controller: _code,
-                  maxLength: VouchConfig.inviteLength,
-                  textCapitalization: TextCapitalization.characters,
-                  autofocus: true,
-                  textAlign: TextAlign.center,
-                  style: text.headlineMedium?.copyWith(letterSpacing: 5),
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                    _UpperCaseFormatter(),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: 'ABCD1234',
-                    counterText: '',
-                    labelText: 'Invite code',
-                  ),
-                  onChanged: (_) {
-                    if (_error != null || _preview != null) {
-                      setState(() {
-                        _error = null;
-                        _preview = null;
-                      });
-                    }
-                  },
-                  onSubmitted: (_) => _find(),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: FilledButton.tonalIcon(
-                    onPressed: _looking ? null : _find,
-                    icon: _looking
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: VouchLoader(size: 22),
-                          )
-                        : const Icon(Icons.search_rounded),
-                    label: Text(_looking ? 'Looking…' : 'Find the promise'),
-                  ),
-                ),
-                if (_error != null) ...<Widget>[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: scheme.errorContainer,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Text(
-                      _error!,
-                      style: text.bodyMedium?.copyWith(
-                        color: scheme.onErrorContainer,
+                    decoration: InputDecoration(
+                      hintText: 'ABCD1234',
+                      counterText: '',
+                      filled: true,
+                      fillColor: PosterColors.butter,
+                      hintStyle: TextStyle(
+                        color: PosterColors.ink.withValues(alpha: 0.28),
+                        letterSpacing: 5,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: PosterColors.ink,
+                          width: 1.6,
+                        ),
                       ),
                     ),
+                    onChanged: (_) {
+                      if (_error != null || _preview != null) {
+                        setState(() {
+                          _error = null;
+                          _preview = null;
+                        });
+                      }
+                    },
+                    onSubmitted: (_) => _find(),
                   ),
-                ],
-                if (preview != null) ...<Widget>[
-                  const SizedBox(height: 28),
-                  const SectionHeader(
-                    index: '01',
-                    title: 'Is this them?',
+                  const SizedBox(height: 12),
+                  PosterPill(
+                    label: _looking ? 'Looking…' : 'Find the promise',
+                    icon: Icons.search_rounded,
+                    onPressed: _looking ? null : _find,
                   ),
-                  InkCard(
-                    color: VouchColors.indigo,
-                    border: false,
-                    padding: const EdgeInsets.all(20),
-                    child: CropMarks(
-                      color: VouchColors.cream.withValues(alpha: 0.35),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 14),
+                    PosterCard(
+                      color: PosterColors.coral,
+                      foreground: PosterColors.cream,
+                      padding: const EdgeInsets.all(14),
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(
+                          fontFamily: 'InstrumentSans',
+                          fontSize: 13,
+                          height: 1.4,
+                          color: PosterColors.cream,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (preview != null) ...<Widget>[
+                    const SizedBox(height: 28),
+                    const PosterSectionLabel('02', 'is this them?'),
+                    const SizedBox(height: 10),
+                    PosterCard(
+                      color: PosterColors.cobalt,
+                      foreground: PosterColors.cream,
+                      padding: const EdgeInsets.all(18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -247,24 +223,30 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                               VouchAvatar(
                                 name: preview.ownerName,
                                 photoUrl: preview.ownerPhotoUrl,
-                                size: 52,
+                                size: 48,
                                 ring: true,
                               ),
-                              const SizedBox(width: 14),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
                                     Text(
                                       preview.ownerName,
-                                      style: text.titleLarge?.copyWith(
-                                        color: VouchColors.cream,
+                                      style: const TextStyle(
+                                        fontFamily: 'InstrumentSans',
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.4,
+                                        color: PosterColors.cream,
                                       ),
                                     ),
                                     Text(
                                       'asked you to witness',
-                                      style: text.bodySmall?.copyWith(
-                                        color: VouchColors.cream.withValues(
+                                      style: TextStyle(
+                                        fontFamily: 'InstrumentSans',
+                                        fontSize: 12,
+                                        color: PosterColors.cream.withValues(
                                           alpha: 0.7,
                                         ),
                                       ),
@@ -274,41 +256,46 @@ class _JoinTrackScreenState extends State<JoinTrackScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: VouchColors.cream.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(8),
+                              color: PosterColors.cream.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: VouchColors.cream.withValues(
+                                color: PosterColors.cream.withValues(
                                   alpha: 0.22,
                                 ),
                               ),
                             ),
                             child: Text(
                               '“${preview.promise}”',
-                              style: text.titleMedium?.copyWith(
+                              style: const TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 15,
                                 height: 1.4,
-                                color: VouchColors.cream,
+                                color: PosterColors.cream,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          SoulButton(
+                          const SizedBox(height: 16),
+                          PosterPill(
                             label: _joining ? 'Joining…' : 'Join as partner',
                             onPressed: _joining ? null : _join,
-                            color: VouchColors.cream,
-                            foreground: VouchColors.ink,
+                            color: PosterColors.cream,
+                            foreground: PosterColors.ink,
+                            arrowColor: PosterColors.acid,
+                            arrowForeground: PosterColors.ink,
                           ),
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

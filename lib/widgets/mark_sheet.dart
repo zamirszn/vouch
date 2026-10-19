@@ -8,10 +8,9 @@ import 'package:provider/provider.dart';
 import '../core/constants.dart';
 import '../models/day_entry.dart';
 import '../services/contact_service.dart';
-import '../theme/vouch_theme.dart';
+import 'poster.dart';
 import 'pressable_spring.dart';
 import 'sheet_frame.dart';
-import 'soul.dart';
 
 Future<DayStatus?> showMarkSheet(
   BuildContext context, {
@@ -25,7 +24,8 @@ Future<DayStatus?> showMarkSheet(
     DayStatus status,
     MarkMethod method,
     String? note,
-  ) onSave,
+  )
+  onSave,
 }) {
   return showVouchSheet<DayStatus>(
     context,
@@ -63,7 +63,8 @@ class MarkSheet extends StatefulWidget {
     DayStatus status,
     MarkMethod method,
     String? note,
-  ) onSave;
+  )
+  onSave;
 
   @override
   State<MarkSheet> createState() => _MarkSheetState();
@@ -74,8 +75,9 @@ class _MarkSheetState extends State<MarkSheet> {
       ? DayStatus.completed
       : widget.initialStatus;
   late MarkMethod _method = widget.initialMethod;
-  late final TextEditingController _note =
-      TextEditingController(text: widget.initialNote ?? '');
+  late final TextEditingController _note = TextEditingController(
+    text: widget.initialNote ?? '',
+  );
   bool _saving = false;
   String? _error;
 
@@ -155,11 +157,9 @@ class _MarkSheetState extends State<MarkSheet> {
                 child: FilledButton.tonalIcon(
                   onPressed: hasPhone
                       ? () => _contact(
-                            (s) => s.whatsApp(
-                              widget.ownerPhone,
-                              message: message,
-                            ),
-                          )
+                          (s) =>
+                              s.whatsApp(widget.ownerPhone, message: message),
+                        )
                       : null,
                   icon: const Icon(Icons.chat_bubble_rounded, size: 20),
                   label: const Text('WhatsApp'),
@@ -170,8 +170,8 @@ class _MarkSheetState extends State<MarkSheet> {
                 tooltip: 'SMS',
                 onPressed: hasPhone
                     ? () => _contact(
-                          (s) => s.sms(widget.ownerPhone, body: message),
-                        )
+                        (s) => s.sms(widget.ownerPhone, body: message),
+                      )
                     : null,
                 icon: const Icon(Icons.sms_rounded),
               ),
@@ -181,9 +181,7 @@ class _MarkSheetState extends State<MarkSheet> {
             const SizedBox(height: 8),
             Text(
               'No number for ${widget.ownerName}. Confirm in person.',
-              style: text.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
           const SizedBox(height: 22),
@@ -195,7 +193,7 @@ class _MarkSheetState extends State<MarkSheet> {
                   icon: Icons.check_circle_rounded,
                   title: 'Kept',
                   subtitle: 'They did it',
-                  color: VouchColors.kept,
+                  color: PosterColors.kelly,
                   onTap: () => setState(() => _status = DayStatus.completed),
                 ),
               ),
@@ -206,7 +204,7 @@ class _MarkSheetState extends State<MarkSheet> {
                   icon: Icons.cancel_rounded,
                   title: 'Missed',
                   subtitle: 'Not today',
-                  color: VouchColors.coral,
+                  color: PosterColors.coral,
                   onTap: () => setState(() => _status = DayStatus.missed),
                 ),
               ),
@@ -223,15 +221,12 @@ class _MarkSheetState extends State<MarkSheet> {
                 ChoiceChip(
                   selected: _method == method,
                   onSelected: (_) => setState(() => _method = method),
-                  avatar: Icon(
-                    switch (method) {
-                      MarkMethod.inPerson => Icons.people_alt_rounded,
-                      MarkMethod.call => Icons.call_rounded,
-                      MarkMethod.message => Icons.chat_bubble_rounded,
-                      MarkMethod.other => Icons.more_horiz_rounded,
-                    },
-                    size: 18,
-                  ),
+                  avatar: Icon(switch (method) {
+                    MarkMethod.inPerson => Icons.people_alt_rounded,
+                    MarkMethod.call => Icons.call_rounded,
+                    MarkMethod.message => Icons.chat_bubble_rounded,
+                    MarkMethod.other => Icons.more_horiz_rounded,
+                  }, size: 18),
                   label: Text(method.shortLabel),
                 ),
             ],
@@ -253,10 +248,7 @@ class _MarkSheetState extends State<MarkSheet> {
             },
           ),
           if (_error != null) ...<Widget>[
-            Text(
-              _error!,
-              style: text.bodySmall?.copyWith(color: scheme.error),
-            ),
+            Text(_error!, style: text.bodySmall?.copyWith(color: scheme.error)),
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 4),
@@ -265,19 +257,19 @@ class _MarkSheetState extends State<MarkSheet> {
             text: 'A witness, not a judge. Say what happened.',
           ),
           const SizedBox(height: 18),
-          SoulButton(
+          PosterPill(
             label: _saving
                 ? 'Saving…'
                 : _status == DayStatus.completed
-                    ? 'Mark kept'
-                    : 'Mark missed',
+                ? 'Mark kept'
+                : 'Mark missed',
             onPressed: _saving ? null : _save,
             color: _status == DayStatus.completed
-                ? VouchColors.kept
-                : VouchColors.coral,
-            foreground: VouchColors.cream,
-            arrowColor: VouchColors.cream,
-            arrowForeground: VouchColors.ink,
+                ? PosterColors.kelly
+                : PosterColors.coral,
+            foreground: PosterColors.cream,
+            arrowColor: PosterColors.cream,
+            arrowForeground: PosterColors.ink,
           ),
           const SizedBox(height: 6),
         ],
@@ -306,7 +298,7 @@ class _StatusChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
 
     return PressableSpring(
       onTap: onTap,
@@ -315,17 +307,11 @@ class _StatusChoice extends StatelessWidget {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.13)
-              : (scheme.brightness == Brightness.dark
-                  ? scheme.surfaceContainerHigh
-                  : VouchColors.cream),
+          color: selected ? color.withValues(alpha: 0.13) : style.soft,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected
-                ? color
-                : scheme.onSurface.withValues(alpha: 0.13),
-            width: selected ? 1.6 : 1.1,
+            color: selected ? color : style.line,
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: Column(
@@ -333,25 +319,25 @@ class _StatusChoice extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Container(width: 8, height: 8, color: color),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const Spacer(),
                 Icon(
-                  selected
-                      ? Icons.check_circle_rounded
-                      : Icons.circle_outlined,
-                  color: selected ? color : scheme.onSurfaceVariant,
+                  selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                  color: selected ? color : style.muted,
                   size: 18,
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Text(title, style: text.titleMedium),
-            Text(
-              subtitle,
-              style: text.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
+            Text(title, style: text.titleMedium?.copyWith(color: style.ink)),
+            Text(subtitle, style: text.bodySmall?.copyWith(color: style.muted)),
           ],
         ),
       ),

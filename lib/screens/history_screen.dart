@@ -1,4 +1,5 @@
-/// Month calendar, lifetime stats and the recent record.
+/// The record, printed on sage: a month of measured cells, lifetime counts
+/// and the recent ledger. No edits — just the days.
 library;
 
 import 'package:flutter/material.dart';
@@ -9,12 +10,10 @@ import '../core/constants.dart';
 import '../core/date_utils.dart';
 import '../models/day_entry.dart';
 import '../state/track_controller.dart';
-import '../theme/vouch_theme.dart';
 import '../widgets/calendar_heatmap.dart';
 import '../widgets/day_detail_sheet.dart';
-import '../widgets/section_header.dart';
+import '../widgets/poster.dart';
 import '../widgets/soul.dart';
-import '../widgets/status_pill.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -26,7 +25,8 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   DateTime? _month;
 
-  DateTime _monthFor(DateTime today) => _month ?? DateTime(today.year, today.month);
+  DateTime _monthFor(DateTime today) =>
+      _month ?? DateTime(today.year, today.month);
 
   DateTime _minMonth(DateTime today, DateTime? startedAt) {
     final windowStart = dateAt(today, -VouchConfig.historyWindowDays);
@@ -47,8 +47,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final track = controller.track;
     final today = controller.today;
     final month = _monthFor(today);
@@ -79,203 +78,224 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return TopFade(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(22, 16, 22, 118),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          14,
+          20,
+          114 + MediaQuery.paddingOf(context).bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            PageHeader(
-              eyebrow: 'History',
-              title: 'The',
-              titleMuted: 'record.',
-              index: '(002)',
-              subtitle: 'No edits. Just the days.',
+            PosterTopBar(
+              right:
+                  '${DateFormat('MMM yyyy').format(today).toUpperCase()} / (002)',
+            ),
+            const SizedBox(height: 28),
+            PosterHeadline(
+              'The\nrecord.',
+              size: 50,
+              accentTail: 1,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Every mark, every miss. No edits.',
+              style: TextStyle(
+                fontFamily: 'InstrumentSans',
+                fontSize: 13,
+                height: 1.35,
+                color: style.muted,
+              ),
             ),
             const SizedBox(height: 24),
-            InkCard(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-            child: Column(
+            Row(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                Expanded(
+                  child: PosterStatCard(
+                    value: '${stats.currentStreak}',
+                    label: 'current streak',
+                    color: PosterColors.acid,
+                    foreground: PosterColors.ink,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PosterStatCard(
+                    value: '${stats.completed}',
+                    label: 'days kept',
+                    color: PosterColors.kelly,
+                    foreground: PosterColors.cream,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PosterStatCard(
+                    value: stats.elapsed == 0
+                        ? '—'
+                        : '${stats.completionPercent}%',
+                    label: 'kept rate',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            const PosterSectionLabel('01', 'the month'),
+            const SizedBox(height: 10),
+            PosterCard(
+              padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+              child: Column(
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
                               monthLabel(month),
-                              style: text.displaySmall?.copyWith(
-                                fontSize: 28,
+                              style: TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
                                 height: 1.05,
-                                letterSpacing: -0.7,
+                                letterSpacing: -0.8,
+                                color: style.cardInk,
+                                fontVariations: const <FontVariation>[
+                                  FontVariation('wght', 700),
+                                  FontVariation('wdth', 96),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Text(
                               '$monthKept kept · $monthMissed missed',
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+                              style: TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 11.5,
+                                color: style.cardMuted,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    IconButton.outlined(
-                      onPressed: canPrev
-                          ? () => _shift(controller, -1)
-                          : null,
-                      icon: const Icon(Icons.arrow_back_rounded, size: 19),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton.outlined(
-                      onPressed: canNext
-                          ? () => _shift(controller, 1)
-                          : null,
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 19),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: CalendarHeatmap(
-                      key: ValueKey<String>(
-                        '${month.year}-${month.month}',
+                      _NavButton(
+                        icon: Icons.arrow_back_rounded,
+                        enabled: canPrev,
+                        onTap: () => _shift(controller, -1),
                       ),
-                      month: month,
-                      days: controller.days,
-                      schedule: track?.schedule,
-                      today: today,
-                      onDayTap: (date) => showDayDetailSheet(
-                        context,
-                        date: date,
-                        entry: controller.days[dayKey(date)],
-                        state: controller.dayState(date),
+                      const SizedBox(width: 7),
+                      _NavButton(
+                        icon: Icons.arrow_forward_rounded,
+                        enabled: canNext,
+                        onTap: () => _shift(controller, 1),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: CalendarHeatmap(
+                        key: ValueKey<String>('${month.year}-${month.month}'),
+                        month: month,
+                        days: controller.days,
+                        schedule: track?.schedule,
                         today: today,
+                        onDayTap: (date) => showDayDetailSheet(
+                          context,
+                          date: date,
+                          entry: controller.days[dayKey(date)],
+                          state: controller.dayState(date),
+                          today: today,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 16,
-                  runSpacing: 8,
-                  children: const <Widget>[
-                    _LegendDot(
-                      color: VouchColors.kept,
-                      label: 'Kept',
-                    ),
-                    _LegendDot(color: VouchColors.coral, label: 'Missed'),
-                    _LegendDot(color: VouchColors.indigo, label: 'Waiting'),
-                    _LegendDot(color: VouchColors.mist, label: 'Rest'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          const SectionHeader(
-            index: '01',
-            title: 'Since the beginning',
-          ),
-          InkCard(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: _HistoryStat(
-                    value: '${stats.currentStreak}',
-                    label: 'Current streak',
-                    color: VouchColors.indigo,
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 44,
-                  color: scheme.outlineVariant.withValues(alpha: 0.6),
-                ),
-                Expanded(
-                  child: _HistoryStat(
-                    value: '${stats.completed}',
-                    label: 'Days kept',
-                    color: VouchColors.keptDeep,
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 44,
-                  color: scheme.outlineVariant.withValues(alpha: 0.6),
-                ),
-                Expanded(
-                  child: _HistoryStat(
-                    value: stats.elapsed == 0
-                        ? '—'
-                        : '${stats.completionPercent}%',
-                    label: 'Kept rate',
-                    color: VouchColors.coral,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 26),
-          const SectionHeader(
-            index: '02',
-            title: 'Recent days',
-          ),
-          if (recent.isEmpty)
-            ExpressiveCard(
-              child: Row(
-                children: <Widget>[
-                  const Icon(
-                    Icons.hourglass_empty_rounded,
-                    color: VouchColors.mist,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'No days have been marked yet. Today is a good first one.',
-                      style: text.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                  const SizedBox(height: 14),
+                  Wrap(
+                    alignment: WrapAlignment.start,
+                    spacing: 14,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      _LegendDot(
+                        color: PosterColors.kelly,
+                        label: 'Kept',
+                        ink: style.cardMuted,
                       ),
-                    ),
+                      _LegendDot(
+                        color: PosterColors.coral,
+                        label: 'Missed',
+                        ink: style.cardMuted,
+                      ),
+                      _LegendDot(
+                        color: PosterColors.cobalt,
+                        label: 'Waiting',
+                        ink: style.cardMuted,
+                      ),
+                      _LegendDot(
+                        color: style.cardInk.withValues(alpha: 0.22),
+                        label: 'Rest',
+                        ink: style.cardMuted,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            )
-          else
-            ExpressiveCard(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-              child: Column(
-                children: <Widget>[
-                  for (var i = 0; i < recent.length && i < 12; i++) ...<Widget>[
-                    _RecentRow(
-                      entry: recent[i],
-                      state: controller.dayState(
-                        parseDayKey(recent[i].date),
-                      ),
-                      onTap: () => showDayDetailSheet(
-                        context,
-                        date: parseDayKey(recent[i].date),
+            ),
+            const SizedBox(height: 28),
+            const PosterSectionLabel('02', 'recent days'),
+            const SizedBox(height: 10),
+            if (recent.isEmpty)
+              PosterCard(
+                child: Text(
+                  'No days have been marked yet. Today is a good first one.',
+                  style: TextStyle(
+                    fontFamily: 'InstrumentSans',
+                    fontSize: 13.5,
+                    height: 1.4,
+                    color: style.cardMuted,
+                  ),
+                ),
+              )
+            else
+              PosterCard(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  children: <Widget>[
+                    for (var i = 0; i < recent.length && i < 12; i++) ...<Widget>[
+                      _RecentRow(
                         entry: recent[i],
                         state: controller.dayState(
                           parseDayKey(recent[i].date),
                         ),
-                        today: today,
+                        onTap: () => showDayDetailSheet(
+                          context,
+                          date: parseDayKey(recent[i].date),
+                          entry: recent[i],
+                          state: controller.dayState(
+                            parseDayKey(recent[i].date),
+                          ),
+                          today: today,
+                        ),
                       ),
-                    ),
-                    if (i < recent.length - 1 && i < 11)
-                      const Divider(indent: 12, endIndent: 12),
+                      if (i < recent.length - 1 && i < 11)
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: style.line,
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
+            const SizedBox(height: 26),
+            PosterFooter(
+              lead: 'Vouch',
+              muted: '${stats.completed} days kept, on the record.',
             ),
           ],
         ),
@@ -284,11 +304,48 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
+class _NavButton extends StatelessWidget {
+  const _NavButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = PosterStyle.of(context);
+    return Opacity(
+      opacity: enabled ? 1 : 0.28,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: style.cardInk,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 17, color: style.card),
+        ),
+      ),
+    );
+  }
+}
+
 class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.color, required this.label});
+  const _LegendDot({
+    required this.color,
+    required this.label,
+    required this.ink,
+  });
 
   final Color color;
   final String label;
+  final Color ink;
 
   @override
   Widget build(BuildContext context) {
@@ -296,58 +353,18 @@ class _LegendDot extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Container(
-          width: 9,
-          height: 9,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 5),
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HistoryStat extends StatelessWidget {
-  const _HistoryStat({
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  final String value;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final dark = scheme.brightness == Brightness.dark;
-    final shown = dark ? Color.lerp(color, Colors.white, 0.42)! : color;
-
-    return Column(
-      children: <Widget>[
-        Text(
-          value,
-          style: text.displaySmall?.copyWith(
-            color: shown,
-            fontSize: 30,
-            height: 1,
-            letterSpacing: -0.8,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label.toUpperCase(),
-          style: text.labelSmall?.copyWith(
-            color: scheme.onSurfaceVariant,
-            letterSpacing: 0.8,
-            fontSize: 10,
+          style: TextStyle(
+            fontFamily: 'InstrumentSans',
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+            color: ink,
           ),
         ),
       ],
@@ -368,9 +385,15 @@ class _RecentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final date = parseDayKey(entry.date);
+    final completed = state == VouchDayState.completed;
+    final color = completed ? PosterColors.kelly : PosterColors.coral;
+    final note = (entry.note?.trim().isNotEmpty ?? false)
+        ? entry.note!.trim()
+        : (entry.partnerNote?.trim().isNotEmpty ?? false)
+            ? entry.partnerNote!.trim()
+            : 'No note.';
 
     return Material(
       color: Colors.transparent,
@@ -378,32 +401,40 @@ class _RecentRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           child: Row(
             children: <Widget>[
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: scheme.onSurface.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: scheme.onSurface.withValues(alpha: 0.10),
-                  ),
+                  color: color,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text(
                       DateFormat('MMM').format(date).toUpperCase(),
-                      style: text.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontSize: 9,
+                      style: const TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 7.5,
+                        letterSpacing: 0.8,
+                        color: PosterColors.cream,
                       ),
                     ),
                     Text(
                       '${date.day}',
-                      style: text.titleSmall,
+                      style: const TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.05,
+                        color: PosterColors.cream,
+                        fontVariations: <FontVariation>[
+                          FontVariation('wght', 700),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -414,27 +445,37 @@ class _RecentRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      friendlyDay(date, today: DateTime.now()),
-                      style: text.titleSmall,
+                      DateFormat('EEE d MMM').format(date),
+                      style: TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: style.cardInk,
+                        fontVariations: const <FontVariation>[
+                          FontVariation('wght', 600),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      (entry.note?.trim().isNotEmpty ?? false)
-                          ? entry.note!.trim()
-                          : (entry.partnerNote?.trim().isNotEmpty ?? false)
-                              ? entry.partnerNote!.trim()
-                              : 'No note.',
+                      note,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                      style: TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 12,
+                        color: style.cardMuted,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              StatusPill.day(state, dense: true),
+              PosterTag(
+                completed ? 'kept' : 'missed',
+                color: color.withValues(alpha: 0.13),
+                foreground: color,
+              ),
             ],
           ),
         ),

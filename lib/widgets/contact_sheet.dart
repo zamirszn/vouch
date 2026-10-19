@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/day_entry.dart';
 import '../services/contact_service.dart';
-import '../theme/vouch_theme.dart';
+import 'poster.dart';
 import 'sheet_frame.dart';
 
 Future<MarkMethod?> showContactSheet(
@@ -64,8 +64,10 @@ class ContactSheet extends StatelessWidget {
           _ContactTile(
             icon: Icons.call_rounded,
             title: 'Phone call',
-            subtitle: phone?.trim().isNotEmpty == true ? phone! : 'No number yet',
-            color: VouchColors.indigo,
+            subtitle: phone?.trim().isNotEmpty == true
+                ? phone!
+                : 'No number yet',
+            color: PosterColors.cobalt,
             onTap: hasPhone ? () => launch((s) => s.call(phone)) : null,
           ),
           const SizedBox(height: 10),
@@ -75,9 +77,7 @@ class ContactSheet extends StatelessWidget {
             subtitle: 'Send a message or voice note',
             color: const Color(0xFF1FA855),
             onTap: hasPhone
-                ? () => launch(
-                      (s) => s.whatsApp(phone, message: message),
-                    )
+                ? () => launch((s) => s.whatsApp(phone, message: message))
                 : null,
           ),
           const SizedBox(height: 10),
@@ -85,7 +85,7 @@ class ContactSheet extends StatelessWidget {
             icon: Icons.sms_rounded,
             title: 'SMS',
             subtitle: 'Plain text message',
-            color: VouchColors.coral,
+            color: PosterColors.coral,
             onTap: hasPhone
                 ? () => launch((s) => s.sms(phone, body: message))
                 : null,
@@ -95,7 +95,7 @@ class ContactSheet extends StatelessWidget {
             icon: Icons.people_alt_rounded,
             title: 'In person',
             subtitle: 'Ask face to face, then come back and mark it',
-            color: VouchColors.kept,
+            color: PosterColors.kelly,
             onTap: () => Navigator.of(context).pop(MarkMethod.inPerson),
           ),
           if (!hasPhone) ...<Widget>[
@@ -132,7 +132,7 @@ class _ContactTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final enabled = onTap != null;
 
     return Material(
@@ -143,13 +143,9 @@ class _ContactTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: scheme.brightness == Brightness.dark
-                ? scheme.surfaceContainerHigh
-                : VouchColors.cream,
+            color: style.soft,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: scheme.onSurface.withValues(alpha: 0.12),
-            ),
+            border: Border.all(color: style.line),
           ),
           child: Row(
             children: <Widget>[
@@ -158,12 +154,9 @@ class _ContactTile extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: enabled ? 0.14 : 0.07),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: enabled ? color : scheme.onSurfaceVariant,
-                ),
+                child: Icon(icon, color: enabled ? color : style.muted),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -173,23 +166,19 @@ class _ContactTile extends StatelessWidget {
                     Text(
                       title,
                       style: text.titleMedium?.copyWith(
-                        color: enabled ? null : scheme.onSurfaceVariant,
+                        color: enabled ? style.ink : style.muted,
                       ),
                     ),
                     Text(
                       subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      style: text.bodySmall?.copyWith(color: style.muted),
                     ),
                   ],
                 ),
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: enabled
-                    ? scheme.onSurfaceVariant
-                    : scheme.onSurfaceVariant.withValues(alpha: 0.4),
+                color: style.muted.withValues(alpha: enabled ? 1 : 0.4),
               ),
             ],
           ),

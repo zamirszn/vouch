@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 
 import '../core/date_utils.dart';
 import '../models/day_entry.dart';
-import '../theme/vouch_theme.dart';
 import 'note_editor_sheet.dart';
+import 'poster.dart';
 import 'sheet_frame.dart';
 import 'status_pill.dart';
 
@@ -20,12 +20,7 @@ Future<void> showDayDetailSheet(
 }) {
   return showVouchSheet<void>(
     context,
-    DayDetailSheet(
-      date: date,
-      entry: entry,
-      state: state,
-      today: today,
-    ),
+    DayDetailSheet(date: date, entry: entry, state: state, today: today),
   );
 }
 
@@ -56,14 +51,14 @@ class DayDetailSheet extends StatelessWidget {
         width: 54,
         height: 54,
         decoration: BoxDecoration(
-          color: VouchColors.indigo,
+          color: PosterColors.cobalt,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
           child: Text(
             '${date.day}',
             style: text.headlineSmall?.copyWith(
-              color: VouchColors.cream,
+              color: PosterColors.cream,
               fontSize: 24,
             ),
           ),
@@ -91,7 +86,7 @@ class DayDetailSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 color: scheme.brightness == Brightness.dark
                     ? scheme.surfaceContainerHigh
-                    : VouchColors.cream,
+                    : PosterColors.cream,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: scheme.onSurface.withValues(alpha: 0.12),
@@ -99,10 +94,7 @@ class DayDetailSheet extends StatelessWidget {
               ),
               child: Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.schedule_rounded,
-                    color: scheme.onSurfaceVariant,
-                  ),
+                  Icon(Icons.schedule_rounded, color: scheme.onSurfaceVariant),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -120,8 +112,8 @@ class DayDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: day.status == DayStatus.completed
-                    ? VouchColors.kept.withValues(alpha: 0.12)
-                    : VouchColors.coral.withValues(alpha: 0.10),
+                    ? PosterColors.kelly.withValues(alpha: 0.12)
+                    : PosterColors.coral.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -162,8 +154,7 @@ class DayDetailSheet extends StatelessWidget {
           const SizedBox(height: 20),
           const SheetNote(
             icon: Icons.calendar_month_outlined,
-            text:
-                'Days with no mark become missed after midnight in the track’s timezone. Rest days follow the partner’s schedule.',
+            text: 'Days with no mark become missed after midnight in the track’s timezone. Rest days follow the partner’s schedule.',
           ),
         ],
       ),

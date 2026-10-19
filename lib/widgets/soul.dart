@@ -607,13 +607,15 @@ class GraphPaper extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final base = scheme.onSurface.withValues(
-      alpha: scheme.brightness == Brightness.dark ? alpha * 1.5 : alpha,
+      alpha: scheme.brightness == Brightness.dark ? alpha * 1.2 : alpha,
     );
     return IgnorePointer(
       child: CustomPaint(
         painter: _GridPainter(
           color: base,
-          majorColor: base.withValues(alpha: 0.95),
+          // Major rules only read slightly stronger than the minor ones —
+          // a full-alpha grid would look like graph paper under a lamp.
+          majorColor: base.withValues(alpha: (base.a * 1.35).clamp(0.0, 1.0)),
           spacing: spacing,
           majorEvery: majorEvery,
         ),

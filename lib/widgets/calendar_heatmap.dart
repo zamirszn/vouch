@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/date_utils.dart';
 import '../models/day_entry.dart';
 import '../models/schedule.dart';
-import '../theme/vouch_theme.dart';
+import 'poster.dart';
 
 class CalendarHeatmap extends StatelessWidget {
   const CalendarHeatmap({
@@ -62,11 +62,7 @@ class CalendarHeatmap extends StatelessWidget {
               children: <Widget>[
                 for (var col = 0; col < 7; col++)
                   Expanded(
-                    child: _cell(
-                      context,
-                      row * 7 + col - leading,
-                      daysInMonth,
-                    ),
+                    child: _cell(context, row * 7 + col - leading, daysInMonth),
                   ),
               ],
             ),
@@ -91,26 +87,23 @@ class CalendarHeatmap extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     final (Color bg, Color fg) = switch (state) {
-      VouchDayState.completed => (
-          VouchColors.kept,
-          VouchColors.cream,
-        ),
+      VouchDayState.completed => (PosterColors.kelly, PosterColors.cream),
       VouchDayState.missed => (
-          VouchColors.coral.withValues(alpha: 0.20),
-          const Color(0xFF9E2B16),
-        ),
+        PosterColors.coral.withValues(alpha: 0.20),
+        const Color(0xFF9E2B16),
+      ),
       VouchDayState.pending => (
-          VouchColors.indigo.withValues(alpha: 0.14),
-          VouchColors.indigo,
-        ),
+        PosterColors.cobalt.withValues(alpha: 0.14),
+        PosterColors.cobalt,
+      ),
       VouchDayState.rest => (
-          Colors.transparent,
-          scheme.onSurfaceVariant.withValues(alpha: 0.65),
-        ),
+        Colors.transparent,
+        scheme.onSurfaceVariant.withValues(alpha: 0.65),
+      ),
       VouchDayState.upcoming => (
-          Colors.transparent,
-          scheme.onSurfaceVariant.withValues(alpha: 0.45),
-        ),
+        Colors.transparent,
+        scheme.onSurfaceVariant.withValues(alpha: 0.45),
+      ),
     };
 
     return Center(
@@ -132,19 +125,14 @@ class CalendarHeatmap extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(
-                '${date.day}',
-                style: text.labelMedium?.copyWith(color: fg),
-              ),
+              Text('${date.day}', style: text.labelMedium?.copyWith(color: fg)),
               if (state == VouchDayState.completed ||
                   state == VouchDayState.missed)
                 Container(
                   width: 4,
                   height: 4,
                   margin: const EdgeInsets.only(top: 2),
-                  decoration: BoxDecoration(
-                    color: fg.withValues(alpha: 0.75),
-                  ),
+                  decoration: BoxDecoration(color: fg.withValues(alpha: 0.75)),
                 ),
             ],
           ),

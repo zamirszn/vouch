@@ -1,7 +1,8 @@
-/// The signed-in shell: Today, History and Settings.
+/// The signed-in shell — three posters: Today, History and You.
 ///
-/// Laid out like a printed ledger — a measured header, one big statement,
-/// instrument-style gauges and numbered sections.
+/// Each tab is a full-bleed colour field with an oversized promise headline,
+/// a printed dial, flat cards and one black pill. Witnesses get the butter
+/// edition, owners the blush one.
 library;
 
 import 'dart:async';
@@ -17,19 +18,16 @@ import '../models/track.dart';
 import '../services/notification_service.dart';
 import '../state/track_controller.dart';
 import '../theme/vouch_theme.dart';
-import '../widgets/animated_background.dart';
 import '../widgets/celebration.dart';
 import '../widgets/contact_sheet.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../widgets/mark_sheet.dart';
 import '../widgets/note_editor_sheet.dart';
 import '../widgets/notification_permission_card.dart';
+import '../widgets/poster.dart';
+import '../widgets/pressable_spring.dart';
 import '../widgets/promise_orb.dart';
-import '../widgets/reveal.dart';
-import '../widgets/section_header.dart';
-import '../widgets/sheet_frame.dart';
 import '../widgets/soul.dart';
-import '../widgets/status_pill.dart';
 import '../widgets/vouch_avatar.dart';
 import '../widgets/vouch_dock.dart';
 import '../widgets/vouch_loader.dart';
@@ -71,22 +69,27 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
     final isPartner = controller.isPartner;
+    final tone = switch (_index) {
+      0 => isPartner ? PosterTone.butter : PosterTone.blush,
+      1 => PosterTone.sage,
+      _ => PosterTone.clay,
+    };
 
     return Scaffold(
       extendBody: true,
-      body: AnimatedBackground(
-        child: SafeArea(
-          bottom: false,
-          child: TabSwitchTransition(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: PosterField(
+        tone: tone,
+        bottom: false,
+        child: TabSwitchTransition(
+          index: _index,
+          child: IndexedStack(
             index: _index,
-            child: IndexedStack(
-              index: _index,
-              children: <Widget>[
-                isPartner ? const _PartnerHome() : const _OwnerHome(),
-                const HistoryScreen(),
-                const SettingsScreen(),
-              ],
-            ),
+            children: <Widget>[
+              isPartner ? const _PartnerHome() : const _OwnerHome(),
+              const HistoryScreen(),
+              const SettingsScreen(),
+            ],
           ),
         ),
       ),
@@ -102,8 +105,8 @@ class _HomeShellState extends State<HomeShell> {
 // Shared pieces
 // ---------------------------------------------------------------------------
 
-class _PagePadding extends StatelessWidget {
-  const _PagePadding({required this.child});
+class _PosterScroll extends StatelessWidget {
+  const _PosterScroll({required this.child});
 
   final Widget child;
 
@@ -115,7 +118,7 @@ class _PagePadding extends StatelessWidget {
           20,
           14,
           20,
-          108 + MediaQuery.paddingOf(context).bottom,
+          114 + MediaQuery.paddingOf(context).bottom,
         ),
         child: child,
       ),
@@ -123,88 +126,16 @@ class _PagePadding extends StatelessWidget {
   }
 }
 
-class _Masthead extends StatelessWidget {
-  const _Masthead({
-    required this.eyebrow,
-    required this.name,
-    required this.date,
-    this.photoUrl,
-  });
-
-  final String eyebrow;
-  final String name;
-  final DateTime date;
-  final String? photoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final dark = scheme.brightness == Brightness.dark;
-
-    return PageHeader(
-      eyebrow: eyebrow,
-      title: name,
-      titleSize: 36,
-      index: '(001)',
-      subtitle: DateFormat('EEEE d MMMM').format(date).toUpperCase(),
-      trailing: Stack(
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: dark ? scheme.surfaceContainerHigh : VouchColors.cream,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: scheme.onSurface.withValues(alpha: 0.8),
-                width: 1.3,
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: scheme.shadow.withValues(alpha: dark ? 0.5 : 0.16),
-                  offset: const Offset(3, 3),
-                  blurRadius: 0,
-                ),
-              ],
-            ),
-            child: VouchAvatar(
-              name: name,
-              photoUrl: photoUrl,
-              size: 46,
-            ),
-          ),
-          Positioned(
-            top: -3,
-            right: -3,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: VouchColors.lime,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: scheme.onSurface.withValues(alpha: 0.85),
-                  width: 1.2,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The promise, set as the page's statement with a technical meta line.
-class _PromiseStatement extends StatelessWidget {
-  const _PromiseStatement({required this.track});
+/// The promise, set as the poster's statement. The last word takes the
+/// field's accent colour.
+class _PromiseHead extends StatelessWidget {
+  const _PromiseHead({required this.track});
 
   final Track track;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final schedule = track.schedule;
 
     return Column(
@@ -212,48 +143,33 @@ class _PromiseStatement extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Container(
-              width: 8,
-              height: 8,
-              color: VouchColors.coral,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'THE ONE THING',
-              style: text.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 1.6,
-              ),
-            ),
+            PosterLabel('the promise', color: style.ink),
             const Spacer(),
-            Text(
+            PosterLabel(
               schedule == null
-                  ? 'NO CLOCK'
-                  : '${schedule.kind.shortLabel.toUpperCase()} · ${schedule.clockLabel.toUpperCase()}',
-              style: text.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 0.8,
-                fontSize: 9,
-              ),
+                  ? 'no clock'
+                  : '${schedule.kind.shortLabel.toUpperCase()} / ${schedule.clockLabel.toUpperCase()}',
+              size: 8.5,
+              tracking: 1.1,
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
+        const SizedBox(height: 13),
+        PosterHeadline(
           track.promise,
-          style: text.displaySmall?.copyWith(
-            fontSize: 38,
-            height: 0.98,
-            letterSpacing: -1.7,
-          ),
+          size: 46,
+          accentTail: 1,
+          maxLines: 4,
         ),
         if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             '“${track.promiseNote!.trim()}”',
-            style: text.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.45,
+            style: TextStyle(
+              fontFamily: 'InstrumentSans',
+              fontSize: 14,
+              height: 1.4,
+              color: style.muted,
             ),
           ),
         ],
@@ -262,180 +178,124 @@ class _PromiseStatement extends StatelessWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.controller});
-
-  final TrackController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = controller.stats;
-    final scheme = Theme.of(context).colorScheme;
-
-    Widget divider() => Container(
-          width: 1,
-          height: 52,
-          color: scheme.onSurface.withValues(alpha: 0.14),
-        );
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: scheme.onSurface.withValues(alpha: 0.22)),
-          bottom: BorderSide(color: scheme.onSurface.withValues(alpha: 0.22)),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: _StatCell(
-              label: 'Best streak',
-              value: '${stats.bestStreak}',
-              color: VouchColors.indigo,
-            ),
-          ),
-          divider(),
-          Expanded(
-            child: _StatCell(
-              label: 'Days kept',
-              value: '${stats.completed}',
-              color: VouchColors.kept,
-            ),
-          ),
-          divider(),
-          Expanded(
-            child: _StatCell(
-              label: 'Kept rate',
-              value: stats.elapsed == 0 ? '—' : '${stats.completionPercent}%',
-              color: VouchColors.coral,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCell extends StatelessWidget {
-  const _StatCell({
-    required this.label,
-    required this.value,
-    required this.color,
+/// Two metadata columns under the headline, as on the posters.
+class _MetaPair extends StatelessWidget {
+  const _MetaPair({
+    required this.leftLabel,
+    required this.leftValue,
+    required this.rightLabel,
+    required this.rightValue,
   });
 
-  final String label;
-  final String value;
-  final Color color;
+  final String leftLabel;
+  final String leftValue;
+  final String rightLabel;
+  final String rightValue;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = scheme.brightness == Brightness.dark;
-    final shown = isDark ? Color.lerp(color, Colors.white, 0.42)! : color;
+    final style = PosterStyle.of(context);
 
-    return Column(
+    Widget cell(String label, String value) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            PosterLabel(label, color: style.muted, size: 8.5, tracking: 1.2),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'InstrumentSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+                letterSpacing: -0.1,
+                color: style.ink,
+                fontVariations: const <FontVariation>[
+                  FontVariation('wght', 600),
+                ],
+              ),
+            ),
+          ],
+        );
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(left: 14),
-          child: Text(
-            label.toUpperCase(),
-            style: text.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              letterSpacing: 1.0,
-              fontSize: 9,
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Text(
-            value,
-            style: text.displaySmall?.copyWith(
-              color: shown,
-              fontSize: 34,
-              height: 0.95,
-              letterSpacing: -1.6,
-            ),
-          ),
-        ),
+        Expanded(child: cell(leftLabel, leftValue)),
+        const SizedBox(width: 16),
+        Expanded(child: cell(rightLabel, rightValue)),
       ],
     );
   }
 }
 
-/// Seven measured columns — each day is a tick. Today carries a coral needle.
-class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({required this.controller});
+Color _stateColor(VouchDayState state) => switch (state) {
+      VouchDayState.completed => PosterColors.kelly,
+      VouchDayState.missed => PosterColors.coral,
+      VouchDayState.pending => PosterColors.cobalt,
+      VouchDayState.rest => VouchColors.mist,
+      VouchDayState.upcoming => VouchColors.mist,
+    };
 
-  final TrackController controller;
+String _stateCode(VouchDayState state) => switch (state) {
+      VouchDayState.completed => 'kept',
+      VouchDayState.missed => 'missed',
+      VouchDayState.pending => 'open',
+      VouchDayState.rest => 'rest',
+      VouchDayState.upcoming => 'next',
+    };
+
+/// Three solid-colour shortcuts — the flat email cards from the posters,
+/// reduced to call, WhatsApp and SMS.
+class _ReachStrip extends StatelessWidget {
+  const _ReachStrip({
+    required this.name,
+    required this.phone,
+    required this.message,
+  });
+
+  final String name;
+  final String? phone;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final dates = <DateTime>[
-      for (var offset = 6; offset >= 0; offset--)
-        dateAt(controller.today, -offset),
-    ];
+    final enabled = (phone?.trim().isNotEmpty ?? false);
 
-    Color stateColor(VouchDayState state) => switch (state) {
-          VouchDayState.completed => VouchColors.kept,
-          VouchDayState.missed => VouchColors.coral,
-          VouchDayState.pending => VouchColors.indigo,
-          VouchDayState.rest ||
-          VouchDayState.upcoming =>
-            scheme.onSurface.withValues(alpha: 0.18),
-        };
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget>[
-        for (final date in dates)
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => showDayDetailSheet(
-                context,
-                date: date,
-                entry: controller.days[dayKey(date)],
-                state: controller.dayState(date),
-                today: controller.today,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+    Widget tile(IconData icon, String label, Color color) => Expanded(
+          child: Opacity(
+            opacity: enabled ? 1 : 0.38,
+            child: PressableSpring(
+              onTap: enabled
+                  ? () => showContactSheet(
+                        context,
+                        name: name,
+                        phone: phone,
+                        message: message,
+                      )
+                  : null,
+              enabled: enabled,
+              pressedScale: 0.96,
+              child: Container(
+                height: 62,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
+                    Icon(icon, size: 18, color: PosterColors.cream),
+                    const SizedBox(height: 5),
                     Text(
-                      shortWeekday(date).substring(0, 1).toUpperCase(),
-                      style: text.labelSmall?.copyWith(
-                        color: dayKey(date) == controller.todayKey
-                            ? scheme.onSurface
-                            : scheme.onSurfaceVariant,
-                        fontSize: 9,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 9),
-                    Container(
-                      width: dayKey(date) == controller.todayKey ? 3 : 2,
-                      height: 24,
-                      color: dayKey(date) == controller.todayKey
-                          ? VouchColors.coral
-                          : stateColor(controller.dayState(date)),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${date.day}',
-                      style: text.labelSmall?.copyWith(
-                        color: dayKey(date) == controller.todayKey
-                            ? scheme.onSurface
-                            : scheme.onSurfaceVariant,
-                        fontSize: 10,
-                        letterSpacing: 0,
+                      label.toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 7.5,
+                        letterSpacing: 1.1,
+                        color: PosterColors.cream,
                       ),
                     ),
                   ],
@@ -443,73 +303,141 @@ class _WeekStrip extends StatelessWidget {
               ),
             ),
           ),
+        );
+
+    return Row(
+      children: <Widget>[
+        tile(Icons.call_rounded, 'call', PosterColors.cobalt),
+        const SizedBox(width: 8),
+        tile(Icons.chat_bubble_rounded, 'whatsapp', PosterColors.kelly),
+        const SizedBox(width: 8),
+        tile(Icons.sms_rounded, 'sms', PosterColors.coral),
       ],
     );
   }
 }
 
-class _ContactAction extends StatelessWidget {
-  const _ContactAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-    this.enabled = true,
-  });
+/// Seven measured days — each one a tick on the card.
+class _WeekCard extends StatelessWidget {
+  const _WeekCard({required this.controller});
 
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  final bool enabled;
+  final TrackController controller;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
+    final dates = <DateTime>[
+      for (var offset = 6; offset >= 0; offset--)
+        dateAt(controller.today, -offset),
+    ];
 
-    return Expanded(
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Column(
-            children: <Widget>[
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: enabled
-                      ? color.withValues(alpha: 0.12)
-                      : scheme.onSurface.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: enabled
-                        ? color.withValues(alpha: 0.4)
-                        : scheme.onSurface.withValues(alpha: 0.08),
-                    width: 1.1,
+    return PosterCard(
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          for (final date in dates)
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => showDayDetailSheet(
+                  context,
+                  date: date,
+                  entry: controller.days[dayKey(date)],
+                  state: controller.dayState(date),
+                  today: controller.today,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    children: <Widget>[
+                      Text(
+                        shortWeekday(date).substring(0, 1).toUpperCase(),
+                        style: TextStyle(
+                          fontFamily: 'SpaceMono',
+                          fontSize: 8,
+                          letterSpacing: 0.5,
+                          color: style.cardMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: dayKey(date) == controller.todayKey ? 5 : 4,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: dayKey(date) == controller.todayKey
+                              ? style.accent == PosterColors.cream
+                                  ? PosterColors.cobalt
+                                  : style.accent
+                              : controller.dayState(date) ==
+                                      VouchDayState.pending
+                                  ? style.cardInk.withValues(alpha: 0.2)
+                                  : _stateColor(controller.dayState(date)),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontFamily: 'InstrumentSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: dayKey(date) == controller.todayKey
+                              ? style.cardInk
+                              : style.cardMuted,
+                          fontVariations: const <FontVariation>[
+                            FontVariation('wght', 600),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  color: enabled ? color : scheme.onSurfaceVariant,
-                  size: 21,
-                ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                label.toUpperCase(),
-                style: text.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontSize: 8.5,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsCards extends StatelessWidget {
+  const _StatsCards({required this.controller});
+
+  final TrackController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = controller.stats;
+
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: PosterStatCard(
+            value: '${stats.bestStreak}',
+            label: 'best streak',
+            color: PosterColors.acid,
+            foreground: PosterColors.ink,
           ),
         ),
-      ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: PosterStatCard(
+            value: '${stats.completed}',
+            label: 'days kept',
+            color: PosterColors.kelly,
+            foreground: PosterColors.cream,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: PosterStatCard(
+            value: stats.elapsed == 0 ? '—' : '${stats.completionPercent}%',
+            label: 'kept rate',
+          ),
+        ),
+      ],
     );
   }
 }
@@ -521,8 +449,7 @@ class _ReminderLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final schedule = controller.track?.schedule;
     final next = controller.nextReminder;
     final remaining = controller.timeToNextReminder;
@@ -533,112 +460,24 @@ class _ReminderLine extends StatelessWidget {
             ? 'No upcoming reminder'
             : 'Next buzz · ${DateFormat('EEE d MMM · h:mm a').format(next)}';
 
-    return Column(
+    return Row(
       children: <Widget>[
-        Container(
-          height: 1,
-          color: scheme.onSurface.withValues(alpha: 0.16),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            children: <Widget>[
-              Icon(
-                Icons.notifications_none_rounded,
-                size: 17,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  label,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              if (remaining != null)
-                Text(
-                  countdownLabel(remaining),
-                  style: text.labelSmall?.copyWith(
-                    color: scheme.onSurface,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-            ],
+        Container(width: 7, height: 7, color: style.accent),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'InstrumentSans',
+              fontSize: 12,
+              height: 1.3,
+              color: style.muted,
+            ),
           ),
         ),
-        Container(
-          height: 1,
-          color: scheme.onSurface.withValues(alpha: 0.16),
-        ),
+        if (remaining != null)
+          PosterLabel(countdownLabel(remaining), color: style.ink, size: 8.5),
       ],
-    );
-  }
-}
-
-/// The cobalt poster the witness sees at the top of their page.
-class _PromisePoster extends StatelessWidget {
-  const _PromisePoster({required this.track});
-
-  final Track track;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-
-    return InkCard(
-      color: VouchColors.indigo,
-      borderColor: VouchColors.indigoDeep,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 26),
-      child: CropMarks(
-        color: VouchColors.cream.withValues(alpha: 0.4),
-        inset: 7,
-        length: 12,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Sticker(
-                  'The promise',
-                  color: VouchColors.lime,
-                  foreground: VouchColors.ink,
-                  rotation: -0.04,
-                ),
-                const Spacer(),
-                Text(
-                  '(002)',
-                  style: text.labelSmall?.copyWith(
-                    color: VouchColors.cream.withValues(alpha: 0.6),
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Text(
-              track.promise,
-              style: text.displaySmall?.copyWith(
-                color: VouchColors.cream,
-                fontSize: 33,
-                height: 0.98,
-                letterSpacing: -1.4,
-              ),
-            ),
-            if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                '“${track.promiseNote!.trim()}”',
-                style: text.bodyMedium?.copyWith(
-                  color: VouchColors.cream.withValues(alpha: 0.72),
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
@@ -698,12 +537,16 @@ class _OwnerHomeState extends State<_OwnerHome> {
     if (track == null) {
       return const Center(child: VouchLoader());
     }
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final state = controller.dayState(controller.today);
     final entry = controller.todayEntry;
     final stats = controller.stats;
     final partner = track.partnerName ?? 'Your partner';
+    final partnerFirst = track.partnerFirstName;
+    final phone = track.partnerPhone;
+    final schedule = track.schedule;
+    final note = entry?.note?.trim();
+    final hasNote = note?.isNotEmpty ?? false;
 
     final caption = switch (state) {
       VouchDayState.completed => 'Kept today',
@@ -713,231 +556,258 @@ class _OwnerHomeState extends State<_OwnerHome> {
       VouchDayState.upcoming => 'Upcoming',
     };
 
-    return _PagePadding(
+    return _PosterScroll(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _Masthead(
-            eyebrow: 'Keeping',
-            name: track.ownerFirstName,
-            date: controller.today,
-            photoUrl: track.ownerPhotoUrl,
+          PosterTopBar(
+            right:
+                '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (001)',
+            trailing: VouchAvatar(
+              name: track.ownerFirstName,
+              photoUrl: track.ownerPhotoUrl,
+              size: 32,
+            ),
           ),
-          const SizedBox(height: 30),
-          Reveal(child: _PromiseStatement(track: track)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 28),
+          _PromiseHead(track: track),
+          const SizedBox(height: 20),
+          _MetaPair(
+            leftLabel: 'witness',
+            leftValue: partner,
+            rightLabel: 'rhythm',
+            rightValue: schedule == null
+                ? 'Not set'
+                : '${schedule.kind.shortLabel} · ${schedule.clockLabel}',
+          ),
+          const SizedBox(height: 24),
           Center(
             child: PromiseOrb(
               state: state,
               streak: stats.currentStreak,
               completion: stats.completionRate,
               caption: caption,
-              size: 244,
             ),
           ),
-          const SizedBox(height: 10),
-          _ReminderLine(controller: controller),
-          const SizedBox(height: 10),
-          const NotificationPermissionCard(),
-          const SizedBox(height: 32),
-          const SectionHeader(
-            index: '01',
-            title: 'The witness',
-            subtitle: 'Only they can close the day.',
-          ),
-          _WitnessTile(controller: controller, track: track, entry: entry),
-          const SizedBox(height: 30),
-          SectionHeader(
-            index: '02',
-            title: 'Today’s note',
-            subtitle: entry?.hasNote ?? false
-                ? null
-                : 'Write it before ${track.partnerFirstName} checks in.',
-            trailing: entry?.hasNote ?? false
-                ? TextButton(
-                    onPressed: () => _editNote(controller, track),
-                    child: const Text('Edit'),
-                  )
-                : null,
-          ),
-          if (state == VouchDayState.rest && !(entry?.hasNote ?? false))
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: SheetNote(
-                icon: Icons.self_improvement_rounded,
-                text: 'No promise today. Add a note if you did it anyway.',
-              ),
-            ),
-          if (entry?.hasNote ?? false)
-            NotePreview(note: entry?.note)
-          else
-            SoulButton(
-              label: 'Write today’s note',
-              icon: Icons.edit_note_rounded,
-              onPressed: () => _editNote(controller, track),
-            ),
-          const SizedBox(height: 30),
-          const SectionHeader(index: '03', title: 'This week'),
-          ExpressiveCard(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
-            child: _WeekStrip(controller: controller),
-          ),
-          const SizedBox(height: 16),
-          _StatsRow(controller: controller),
-          const SizedBox(height: 22),
-          Center(
-            child: Text(
-              partner == 'Your partner'
-                  ? 'One promise. One witness.'
-                  : 'Witnessed by $partner.',
-              style: text.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WitnessTile extends StatelessWidget {
-  const _WitnessTile({
-    required this.controller,
-    required this.track,
-    required this.entry,
-  });
-
-  final TrackController controller;
-  final Track track;
-  final DayEntry? entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final marked = entry?.isMarked ?? false;
-    final completed = entry?.status == DayStatus.completed;
-    final phone = track.partnerPhone?.trim() ?? '';
-    final message =
-        'Hey ${track.partnerFirstName}, checking in on my Vouch promise — ${track.promise}.';
-
-    final color = completed
-        ? VouchColors.kept
-        : marked
-            ? VouchColors.coral
-            : VouchColors.indigo;
-
-    return InkCard(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              VouchAvatar(
-                name: track.partnerName ?? 'Partner',
-                photoUrl: track.partnerPhotoUrl,
-                size: 44,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 26),
+          PosterCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
                   children: <Widget>[
-                    Text(
-                      track.partnerName ?? 'Your partner',
-                      style: text.titleMedium,
+                    PosterLabel('today / ${_stateCode(state)}',
+                        color: style.cardMuted, size: 8.5, tracking: 1.2),
+                    const Spacer(),
+                    PosterTag(
+                      caption,
+                      color: _stateColor(state).withValues(alpha: 0.14),
+                      foreground: _stateColor(state),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      !marked
-                          ? 'Waiting on their mark.'
-                          : <String?>[
-                              entry?.method?.label,
-                              entry?.markedAt == null
-                                  ? null
-                                  : DateFormat('h:mm a')
-                                      .format(entry!.markedAt!.toLocal()),
-                            ].whereType<String>().join(' · '),
-                      style: text.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    if (hasNote) ...<Widget>[
+                      const SizedBox(width: 4),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(40, 30),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: style.cardInk,
+                          textStyle: const TextStyle(
+                            fontFamily: 'InstrumentSans',
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onPressed: () => _editNote(controller, track),
+                        child: const Text('Edit'),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (hasNote)
+                  Text(
+                    '“$note”',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 16,
+                      height: 1.38,
+                      letterSpacing: -0.2,
+                      color: style.cardInk,
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Nothing logged yet.',
+                        style: TextStyle(
+                          fontFamily: 'InstrumentSans',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.6,
+                          height: 1.1,
+                          color: style.cardInk,
+                          fontVariations: const <FontVariation>[
+                            FontVariation('wght', 700),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        state == VouchDayState.rest
+                            ? 'No promise today. Add a note if you did it anyway.'
+                            : 'Write it before $partnerFirst checks in.',
+                        style: TextStyle(
+                          fontFamily: 'InstrumentSans',
+                          fontSize: 12.5,
+                          height: 1.35,
+                          color: style.cardMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 14),
+                if (!hasNote)
+                  PosterPill(
+                    label: 'Write today’s note',
+                    icon: Icons.edit_note_rounded,
+                    compact: true,
+                    arrow: false,
+                    onPressed: () => _editNote(controller, track),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          _ReachStrip(
+            name: partnerFirst,
+            phone: phone,
+            message:
+                'Hey $partnerFirst, checking in on my Vouch promise — ${track.promise}.',
+          ),
+          const SizedBox(height: 28),
+          PosterSectionLabel(
+            '01',
+            'the witness',
+            trailing: PosterTag(
+              !(entry?.isMarked ?? false)
+                  ? 'waiting'
+                  : entry!.status == DayStatus.completed
+                      ? 'kept'
+                      : 'missed',
+              color: !(entry?.isMarked ?? false)
+                  ? style.soft
+                  : _stateColor(
+                      entry!.status == DayStatus.completed
+                          ? VouchDayState.completed
+                          : VouchDayState.missed,
+                    )
+                      .withValues(alpha: 0.14),
+              foreground: !(entry?.isMarked ?? false)
+                  ? style.muted
+                  : _stateColor(
+                      entry!.status == DayStatus.completed
+                          ? VouchDayState.completed
+                          : VouchDayState.missed,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          PosterCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    VouchAvatar(
+                      name: partner,
+                      photoUrl: track.partnerPhotoUrl,
+                      size: 44,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            partner,
+                            style: TextStyle(
+                              fontFamily: 'InstrumentSans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              color: style.cardInk,
+                              fontVariations: const <FontVariation>[
+                                FontVariation('wght', 700),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            !(entry?.isMarked ?? false)
+                                ? 'Waiting on their mark.'
+                                : <String?>[
+                                    entry?.method?.label,
+                                    entry?.markedAt == null
+                                        ? null
+                                        : DateFormat('h:mm a').format(
+                                            entry!.markedAt!.toLocal(),
+                                          ),
+                                  ].whereType<String>().join(' · '),
+                            style: TextStyle(
+                              fontFamily: 'InstrumentSans',
+                              fontSize: 12.5,
+                              color: style.cardMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              StatusPill(
-                label: !marked
-                    ? 'Waiting'
-                    : completed
-                        ? 'Kept'
-                        : 'Missed',
-                color: color,
-                icon: !marked
-                    ? Icons.schedule_rounded
-                    : completed
-                        ? Icons.check_rounded
-                        : Icons.close_rounded,
-                dense: true,
-              ),
-            ],
-          ),
-          if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '“${entry!.partnerNote!.trim()}”',
-                style: text.bodyMedium?.copyWith(height: 1.45),
-              ),
+                if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text(
+                    '“${entry!.partnerNote!.trim()}”',
+                    style: TextStyle(
+                      fontFamily: 'InstrumentSans',
+                      fontSize: 14.5,
+                      height: 1.4,
+                      color: style.cardInk,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-          const SizedBox(height: 12),
-          Container(
-            height: 1,
-            color: scheme.onSurface.withValues(alpha: 0.12),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: <Widget>[
-              _ContactAction(
-                icon: Icons.call_rounded,
-                label: 'Call',
-                color: VouchColors.indigo,
-                enabled: phone.isNotEmpty,
-                onTap: () => showContactSheet(
-                  context,
-                  name: track.partnerFirstName,
-                  phone: track.partnerPhone,
-                  message: message,
-                ),
-              ),
-              _ContactAction(
-                icon: Icons.chat_bubble_rounded,
-                label: 'WhatsApp',
-                color: const Color(0xFF1FA855),
-                enabled: phone.isNotEmpty,
-                onTap: () => showContactSheet(
-                  context,
-                  name: track.partnerFirstName,
-                  phone: track.partnerPhone,
-                  message: message,
-                ),
-              ),
-              _ContactAction(
-                icon: Icons.sms_rounded,
-                label: 'SMS',
-                color: VouchColors.coral,
-                enabled: phone.isNotEmpty,
-                onTap: () => showContactSheet(
-                  context,
-                  name: track.partnerFirstName,
-                  phone: track.partnerPhone,
-                  message: message,
-                ),
-              ),
-            ],
+          const SizedBox(height: 26),
+          const PosterSectionLabel('02', 'this week'),
+          const SizedBox(height: 10),
+          _WeekCard(controller: controller),
+          const SizedBox(height: 16),
+          _StatsCards(controller: controller),
+          const SizedBox(height: 22),
+          _ReminderLine(controller: controller),
+          const SizedBox(height: 12),
+          const NotificationPermissionCard(),
+          const SizedBox(height: 26),
+          PosterFooter(
+            lead: 'Vouch',
+            muted: 'One promise, one witness.',
+          ),
+          const SizedBox(height: 10),
+          Text(
+            partner == 'Your partner'
+                ? 'One promise. One witness.'
+                : 'Witnessed by $partner.',
+            style: TextStyle(
+              fontFamily: 'SpaceMono',
+              fontSize: 9.5,
+              letterSpacing: 0.6,
+              color: style.muted,
+            ),
           ),
         ],
       ),
@@ -990,46 +860,77 @@ class _PartnerHome extends StatelessWidget {
     if (track == null) {
       return const Center(child: VouchLoader());
     }
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final entry = controller.todayEntry;
     final state = controller.dayState(controller.today);
     final marked = entry?.isMarked ?? false;
     final completed = entry?.status == DayStatus.completed;
-    final phone = track.ownerPhone?.trim() ?? '';
-    final message =
-        'Hey ${track.ownerFirstName}, checking in on your Vouch promise: ${track.promise}. Did you get it done today?';
+    final ownerFirst = track.ownerFirstName;
+    final schedule = track.schedule;
+    final hasNote = entry?.hasNote ?? false;
+    final accent = completed ? PosterColors.kelly : PosterColors.coral;
 
-    return _PagePadding(
+    return _PosterScroll(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _Masthead(
-            eyebrow: 'Witnessing',
-            name: track.ownerFirstName,
-            date: controller.today,
-            photoUrl: track.ownerPhotoUrl,
+          PosterTopBar(
+            right:
+                '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (002)',
+            trailing: VouchAvatar(
+              name: ownerFirst,
+              photoUrl: track.ownerPhotoUrl,
+              size: 32,
+            ),
           ),
-          const SizedBox(height: 30),
-          _PromisePoster(track: track),
-          const SizedBox(height: 30),
-          SectionHeader(
-            index: '01',
-            title: 'Today',
-            subtitle: marked ? null : 'Check in, then mark it.',
+          const SizedBox(height: 28),
+          _PromiseHead(track: track),
+          const SizedBox(height: 20),
+          _MetaPair(
+            leftLabel: 'witnessing',
+            leftValue: ownerFirst,
+            rightLabel: 'rhythm',
+            rightValue: schedule == null
+                ? 'Not set'
+                : '${schedule.kind.shortLabel} · ${schedule.clockLabel}',
           ),
+          const SizedBox(height: 26),
+          PosterSectionLabel(
+            '01',
+            'today',
+            trailing: PosterTag(
+              !marked ? 'waiting' : completed ? 'kept' : 'missed',
+              color: marked
+                  ? accent.withValues(alpha: 0.14)
+                  : style.soft,
+              foreground: marked ? accent : style.muted,
+            ),
+          ),
+          const SizedBox(height: 10),
           if (!marked)
-            InkCard(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
+            PosterCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      LetterBadge(
-                        letter: '?',
-                        color: VouchColors.indigo,
-                        size: 44,
+                      Container(
+                        width: 46,
+                        height: 46,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: style.cardInk,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '?',
+                          style: TextStyle(
+                            fontFamily: 'InstrumentSans',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: PosterColors.cream,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1038,17 +939,29 @@ class _PartnerHome extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               state == VouchDayState.rest
-                                  ? 'Rest day'
-                                  : 'Did ${track.ownerFirstName} keep it?',
-                              style: text.headlineSmall,
+                                  ? 'Rest day.'
+                                  : 'Did $ownerFirst keep it?',
+                              style: TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                                height: 1.1,
+                                letterSpacing: -0.6,
+                                color: style.cardInk,
+                                fontVariations: const <FontVariation>[
+                                  FontVariation('wght', 700),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
                               state == VouchDayState.rest
                                   ? 'No promise is scheduled today.'
                                   : 'Ask, then record the answer.',
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+                              style: TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 12.5,
+                                color: style.cardMuted,
                               ),
                             ),
                           ],
@@ -1056,70 +969,41 @@ class _PartnerHome extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: <Widget>[
-                      _ContactAction(
-                        icon: Icons.call_rounded,
-                        label: 'Call',
-                        color: VouchColors.indigo,
-                        enabled: phone.isNotEmpty,
-                        onTap: () => showContactSheet(
-                          context,
-                          name: track.ownerFirstName,
-                          phone: track.ownerPhone,
-                          message: message,
-                        ),
-                      ),
-                      _ContactAction(
-                        icon: Icons.chat_bubble_rounded,
-                        label: 'WhatsApp',
-                        color: const Color(0xFF1FA855),
-                        enabled: phone.isNotEmpty,
-                        onTap: () => showContactSheet(
-                          context,
-                          name: track.ownerFirstName,
-                          phone: track.ownerPhone,
-                          message: message,
-                        ),
-                      ),
-                      _ContactAction(
-                        icon: Icons.sms_rounded,
-                        label: 'SMS',
-                        color: VouchColors.coral,
-                        enabled: phone.isNotEmpty,
-                        onTap: () => showContactSheet(
-                          context,
-                          name: track.ownerFirstName,
-                          phone: track.ownerPhone,
-                          message: message,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SoulButton(
+                  const SizedBox(height: 16),
+                  PosterPill(
                     label: 'Mark today',
                     icon: Icons.fact_check_rounded,
+                    color: style.cardInk,
+                    foreground: PosterColors.cream,
+                    arrowColor: PosterColors.acid,
+                    arrowForeground: PosterColors.ink,
                     onPressed: () => _mark(context),
                   ),
                 ],
               ),
             )
           else
-            InkCard(
-              borderColor: (completed ? VouchColors.kept : VouchColors.coral)
-                  .withValues(alpha: 0.55),
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+            PosterCard(
+              color: accent,
+              foreground: PosterColors.cream,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      LetterBadge(
-                        letter: completed ? 'K' : 'M',
-                        color: completed ? VouchColors.kept : VouchColors.coral,
-                        size: 44,
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: PosterColors.cream.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          completed
+                              ? Icons.check_rounded
+                              : Icons.close_rounded,
+                          color: PosterColors.cream,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1128,8 +1012,18 @@ class _PartnerHome extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               completed ? 'Kept' : 'Missed',
-                              style: text.headlineSmall,
+                              style: const TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                height: 1.05,
+                                color: PosterColors.cream,
+                                fontVariations: <FontVariation>[
+                                  FontVariation('wght', 700),
+                                ],
+                              ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               <String?>[
                                 entry?.method?.label,
@@ -1139,8 +1033,12 @@ class _PartnerHome extends StatelessWidget {
                                         entry!.markedAt!.toLocal(),
                                       ),
                               ].whereType<String>().join(' · '),
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+                              style: TextStyle(
+                                fontFamily: 'InstrumentSans',
+                                fontSize: 12.5,
+                                color: PosterColors.cream.withValues(
+                                  alpha: 0.72,
+                                ),
                               ),
                             ),
                           ],
@@ -1152,64 +1050,71 @@ class _PartnerHome extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       '“${entry!.partnerNote!.trim()}”',
-                      style: text.bodyMedium?.copyWith(height: 1.45),
+                      style: const TextStyle(
+                        fontFamily: 'InstrumentSans',
+                        fontSize: 14.5,
+                        height: 1.4,
+                        color: PosterColors.cream,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 14),
                   Row(
                     children: <Widget>[
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: PosterPill(
+                          label: 'Change mark',
+                          icon: Icons.edit_rounded,
+                          compact: true,
+                          arrow: false,
+                          color: PosterColors.cream,
+                          foreground: PosterColors.ink,
                           onPressed: () => _mark(context),
-                          icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: const Text('Change mark'),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton.outlined(
-                        tooltip: 'Contact ${track.ownerFirstName}',
-                        onPressed: () => showContactSheet(
-                          context,
-                          name: track.ownerFirstName,
-                          phone: track.ownerPhone,
-                          message: message,
-                        ),
-                        icon: const Icon(Icons.chat_bubble_outline_rounded),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          if (entry?.hasNote ?? false) ...<Widget>[
-            const SizedBox(height: 30),
-            const SectionHeader(index: '02', title: 'Their words'),
-            NotePreview(note: entry?.note),
-          ],
-          const SizedBox(height: 26),
-          _ReminderLine(controller: controller),
-          const SizedBox(height: 10),
-          const NotificationPermissionCard(),
-          const SizedBox(height: 30),
-          SectionHeader(
-            index: (entry?.hasNote ?? false) ? '03' : '02',
-            title: 'This week',
-          ),
-          ExpressiveCard(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
-            child: _WeekStrip(controller: controller),
-          ),
           const SizedBox(height: 16),
-          _StatsRow(controller: controller),
-          const SizedBox(height: 22),
-          Center(
-            child: Text(
-              'Witness, not judge.',
-              style: text.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 1.2,
+          _ReachStrip(
+            name: ownerFirst,
+            phone: track.ownerPhone,
+            message:
+                'Hey $ownerFirst, checking in on your Vouch promise: ${track.promise}. Did you get it done today?',
+          ),
+          if (hasNote) ...<Widget>[
+            const SizedBox(height: 26),
+            const PosterSectionLabel('02', 'their words'),
+            const SizedBox(height: 10),
+            PosterCard(
+              child: Text(
+                '“${entry!.note!.trim()}”',
+                style: TextStyle(
+                  fontFamily: 'InstrumentSans',
+                  fontSize: 16.5,
+                  height: 1.4,
+                  letterSpacing: -0.2,
+                  color: style.cardInk,
+                ),
               ),
             ),
+          ],
+          const SizedBox(height: 26),
+          PosterSectionLabel(hasNote ? '03' : '02', 'this week'),
+          const SizedBox(height: 10),
+          _WeekCard(controller: controller),
+          const SizedBox(height: 16),
+          _StatsCards(controller: controller),
+          const SizedBox(height: 22),
+          _ReminderLine(controller: controller),
+          const SizedBox(height: 12),
+          const NotificationPermissionCard(),
+          const SizedBox(height: 26),
+          PosterFooter(
+            lead: 'Witness, not judge.',
+            muted: 'Only the witness closes the day.',
           ),
         ],
       ),

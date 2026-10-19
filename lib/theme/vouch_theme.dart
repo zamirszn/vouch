@@ -30,9 +30,18 @@ class VouchColors {
   static const Color keptDeep = Color(0xFF1E5B31);
 
   /// Paper stocks.
-  static const Color cream = Color(0xFFF7F5EE);
+  static const Color cream = Color(0xFFF4F1E8);
   static const Color paper = Color(0xFFEDEBE4);
   static const Color paperDeep = Color(0xFFE2E0D6);
+
+  /// Poster fields — the ShareOS language starts with one saturated colour
+  /// filling the whole screen.
+  static const Color blush = Color(0xFFF0BFDE);
+  static const Color butter = Color(0xFFF4C51F);
+  static const Color sage = Color(0xFFBFDA9C);
+  static const Color clay = Color(0xFF8D6C58);
+  static const Color flame = Color(0xFFFF6B57);
+  static const Color acid = Color(0xFFE3F14B);
 
   /// Ink.
   static const Color ink = Color(0xFF12110D);
@@ -221,11 +230,14 @@ class VouchTheme {
         contentTextStyle: text.bodyLarge,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
-        modalBackgroundColor: scheme.surfaceContainerHigh,
-        showDragHandle: true,
+        backgroundColor: isDark ? const Color(0xFF23211B) : VouchColors.cream,
+        modalBackgroundColor:
+            isDark ? const Color(0xFF23211B) : VouchColors.cream,
+        showDragHandle: false,
         dragHandleColor: scheme.outlineVariant,
-        shape: RoundedRectangleBorder(borderRadius: VouchShapes.sheet),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        ),
         clipBehavior: Clip.antiAlias,
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -296,7 +308,7 @@ class VouchTheme {
       onError: VouchColors.cream,
       errorContainer: Color(0xFFFFDAD6),
       onErrorContainer: Color(0xFF410002),
-      surface: VouchColors.paper,
+      surface: VouchColors.cream,
       onSurface: VouchColors.ink,
       onSurfaceVariant: Color(0xFF6F6A5D),
       surfaceDim: Color(0xFFDEDCD2),
@@ -336,16 +348,16 @@ class VouchTheme {
       onError: Color(0xFF690005),
       errorContainer: Color(0xFF93000A),
       onErrorContainer: Color(0xFFFFDAD6),
-      surface: VouchColors.ink,
-      onSurface: Color(0xFFF2EFE5),
+      surface: Color(0xFF171610),
+      onSurface: Color(0xFFF4F1E8),
       onSurfaceVariant: Color(0xFFB4AE9E),
       surfaceDim: VouchColors.ink,
       surfaceBright: Color(0xFF3A362B),
       surfaceContainerLowest: Color(0xFF0B0A07),
       surfaceContainerLow: Color(0xFF1A1812),
       surfaceContainer: Color(0xFF1F1D16),
-      surfaceContainerHigh: Color(0xFF27241C),
-      surfaceContainerHighest: Color(0xFF312D23),
+      surfaceContainerHigh: Color(0xFF23211B),
+      surfaceContainerHighest: Color(0xFF2E2B22),
       outline: Color(0xFF8B8577),
       outlineVariant: Color(0xFF3D392E),
       shadow: Color(0xFF000000),

@@ -4,10 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../core/constants.dart';
-import '../theme/vouch_theme.dart';
-import 'section_header.dart';
+import 'poster.dart';
 import 'sheet_frame.dart';
-import 'soul.dart';
 
 Future<bool?> showNoteEditorSheet(
   BuildContext context, {
@@ -17,11 +15,7 @@ Future<bool?> showNoteEditorSheet(
 }) {
   return showVouchSheet<bool>(
     context,
-    NoteEditorSheet(
-      promise: promise,
-      initialNote: initialNote,
-      onSave: onSave,
-    ),
+    NoteEditorSheet(promise: promise, initialNote: initialNote, onSave: onSave),
   );
 }
 
@@ -42,8 +36,9 @@ class NoteEditorSheet extends StatefulWidget {
 }
 
 class _NoteEditorSheetState extends State<NoteEditorSheet> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialNote ?? '');
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialNote ?? '',
+  );
   bool _saving = false;
   String? _error;
 
@@ -90,7 +85,8 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
             maxLength: VouchConfig.maxDailyNoteLength,
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              hintText: 'Walked the canal loop at sunset. Legs tired, head clear.',
+              hintText:
+                  'Walked the canal loop at sunset. Legs tired, head clear.',
               alignLabelWithHint: true,
             ),
             onChanged: (_) {
@@ -98,10 +94,7 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
             },
           ),
           if (_error != null) ...<Widget>[
-            Text(
-              _error!,
-              style: text.bodySmall?.copyWith(color: scheme.error),
-            ),
+            Text(_error!, style: text.bodySmall?.copyWith(color: scheme.error)),
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 4),
@@ -111,13 +104,13 @@ class _NoteEditorSheetState extends State<NoteEditorSheet> {
                 'Your witness sees this. You can edit until they mark the day.',
           ),
           const SizedBox(height: 18),
-          SoulButton(
+          PosterPill(
             label: _saving
                 ? 'Saving…'
                 : widget.initialNote == null ||
-                        widget.initialNote!.trim().isEmpty
-                    ? 'Save note'
-                    : 'Update note',
+                      widget.initialNote!.trim().isEmpty
+                ? 'Save note'
+                : 'Update note',
             onPressed: _saving ? null : _save,
           ),
           const SizedBox(height: 6),
@@ -142,36 +135,34 @@ class NotePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final style = PosterStyle.of(context);
     final value = note?.trim();
     final empty = value == null || value.isEmpty;
 
-    return ExpressiveCard(
-      color: empty
-          ? scheme.surfaceContainerHigh
-          : VouchColors.indigo.withValues(alpha: 0.06),
-      padding: const EdgeInsets.all(18),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: style.soft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: style.line),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(
-            Icons.notes_rounded,
-            color: VouchColors.indigo,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
+          Icon(Icons.notes_rounded, color: style.ink, size: 18),
+          const SizedBox(width: 11),
           Expanded(
             child: Text(
               empty ? emptyLabel : value,
               maxLines: maxLines,
               overflow: TextOverflow.ellipsis,
-              style: empty
-                  ? text.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontStyle: FontStyle.italic,
-                    )
-                  : text.bodyLarge?.copyWith(height: 1.45),
+              style: TextStyle(
+                fontFamily: 'InstrumentSans',
+                fontSize: 13,
+                height: 1.45,
+                color: empty ? style.muted : style.ink,
+                fontStyle: empty ? FontStyle.italic : FontStyle.normal,
+              ),
             ),
           ),
         ],
