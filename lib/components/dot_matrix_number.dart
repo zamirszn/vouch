@@ -39,7 +39,8 @@ class _DotMatrixNumberState extends State<DotMatrixNumber>
   @override
   void initState() {
     super.initState();
-    final reduce = VouchMotion.reduced(context);
+    final reduce = WidgetsBinding
+        .instance.platformDispatcher.accessibilityFeatures.disableAnimations;
     _controller = SingleMotionController(
       motion: VouchMotion.value,
       vsync: this,
@@ -54,7 +55,8 @@ class _DotMatrixNumberState extends State<DotMatrixNumber>
   void didUpdateWidget(DotMatrixNumber oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value == widget.value) return;
-    if (VouchMotion.reduced(context)) {
+    if (WidgetsBinding
+        .instance.platformDispatcher.accessibilityFeatures.disableAnimations) {
       _controller.value = widget.value.toDouble();
     } else {
       _controller.animateTo(widget.value.toDouble());

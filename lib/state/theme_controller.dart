@@ -1,8 +1,10 @@
-/// Persisted light/dark/system preference.
+/// Persisted light/dark/system preference. Material-free.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+enum VouchThemeMode { system, light, dark }
 
 class ThemeController extends ChangeNotifier {
   static const String _key = 'vouch_theme_mode';
@@ -10,14 +12,14 @@ class ThemeController extends ChangeNotifier {
   ThemeController([this._preferences]);
 
   SharedPreferences? _preferences;
-  ThemeMode _mode = ThemeMode.system;
+  VouchThemeMode _mode = VouchThemeMode.system;
 
-  ThemeMode get mode => _mode;
+  VouchThemeMode get mode => _mode;
 
   String get label => switch (_mode) {
-        ThemeMode.system => 'System',
-        ThemeMode.light => 'Light',
-        ThemeMode.dark => 'Dark',
+        VouchThemeMode.system => 'System',
+        VouchThemeMode.light => 'Light',
+        VouchThemeMode.dark => 'Dark',
       };
 
   Future<void> load() async {
@@ -25,9 +27,9 @@ class ThemeController extends ChangeNotifier {
       _preferences ??= await SharedPreferences.getInstance();
       final stored = _preferences?.getString(_key);
       _mode = switch (stored) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
+        'light' => VouchThemeMode.light,
+        'dark' => VouchThemeMode.dark,
+        _ => VouchThemeMode.system,
       };
       notifyListeners();
     } catch (_) {
@@ -35,7 +37,7 @@ class ThemeController extends ChangeNotifier {
     }
   }
 
-  Future<void> setMode(ThemeMode mode) async {
+  Future<void> setMode(VouchThemeMode mode) async {
     if (mode == _mode) return;
     _mode = mode;
     notifyListeners();
@@ -49,9 +51,9 @@ class ThemeController extends ChangeNotifier {
 
   Future<void> cycle() {
     final next = switch (_mode) {
-      ThemeMode.system => ThemeMode.light,
-      ThemeMode.light => ThemeMode.dark,
-      ThemeMode.dark => ThemeMode.system,
+      VouchThemeMode.system => VouchThemeMode.light,
+      VouchThemeMode.light => VouchThemeMode.dark,
+      VouchThemeMode.dark => VouchThemeMode.system,
     };
     return setMode(next);
   }

@@ -446,22 +446,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              for (final mode in <ThemeMode>[
-                ThemeMode.system,
-                ThemeMode.light,
-                ThemeMode.dark,
+              for (final mode in <VouchThemeMode>[
+                VouchThemeMode.system,
+                VouchThemeMode.light,
+                VouchThemeMode.dark,
               ])
                 _ChoicePill(
                   selected: theme.mode == mode,
                   icon: switch (mode) {
-                    ThemeMode.system => Icons.brightness_auto_rounded,
-                    ThemeMode.light => Icons.light_mode_rounded,
-                    ThemeMode.dark => Icons.dark_mode_rounded,
+                    VouchThemeMode.system => Icons.brightness_auto_rounded,
+                    VouchThemeMode.light => Icons.light_mode_rounded,
+                    VouchThemeMode.dark => Icons.dark_mode_rounded,
                   },
                   label: switch (mode) {
-                    ThemeMode.system => 'System',
-                    ThemeMode.light => 'Light',
-                    ThemeMode.dark => 'Dark',
+                    VouchThemeMode.system => 'System',
+                    VouchThemeMode.light => 'Light',
+                    VouchThemeMode.dark => 'Dark',
                   },
                   onTap: () => theme.setMode(mode),
                 ),

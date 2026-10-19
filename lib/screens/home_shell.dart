@@ -1,36 +1,44 @@
-/// The signed-in shell — three posters: Today, History and You.
+/// The signed-in shell: Today, History and You.
 ///
-/// Each tab is a full-bleed colour field with an oversized promise headline,
-/// a printed dial, flat cards and one black pill. Witnesses get the butter
-/// edition, owners the blush one.
+/// Today is an atmospheric dashboard. The background, hero and accents shift
+/// with the day state; both roles share the same frame but the hero and
+/// actions change with what they are allowed to do.
 library;
 
 import 'dart:async';
 
-import 'package:expressive_m3/expressive_m3.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:motor/motor.dart';
 import 'package:provider/provider.dart';
 
+import '../components/dot_matrix_number.dart';
+import '../components/glass_card.dart';
+import '../components/stat_tile.dart';
+import '../components/vertical_ruler.dart';
+import '../components/vouch_button.dart';
+import '../components/vouch_icon.dart';
+import '../components/vouch_loader.dart';
+import '../components/vouch_nav_shell.dart';
+import '../components/vouch_scaffold.dart';
+import '../components/vouch_top_bar.dart';
+import '../components/vouch_toast.dart';
+import '../components/week_strip.dart';
 import '../core/date_utils.dart';
+import '../design/vouch_motion.dart';
+import '../design/vouch_theme.dart';
+import '../design/vouch_tokens.dart';
+import '../design/vouch_type.dart';
 import '../models/day_entry.dart';
 import '../models/track.dart';
 import '../services/notification_service.dart';
 import '../state/track_controller.dart';
-import '../theme/vouch_theme.dart';
 import '../widgets/celebration.dart';
 import '../widgets/contact_sheet.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../widgets/mark_sheet.dart';
 import '../widgets/note_editor_sheet.dart';
 import '../widgets/notification_permission_card.dart';
-import '../widgets/poster.dart';
-import '../widgets/pressable_spring.dart';
-import '../widgets/promise_orb.dart';
-import '../widgets/soul.dart';
-import '../widgets/vouch_avatar.dart';
-import '../widgets/vouch_dock.dart';
-import '../widgets/vouch_loader.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 
@@ -69,33 +77,36 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
     final isPartner = controller.isPartner;
-    final tone = switch (_index) {
-      0 => isPartner ? PosterTone.butter : PosterTone.blush,
-      1 => PosterTone.sage,
-      _ => PosterTone.clay,
-    };
+    final todayTone = toneForDay(controller.dayState(controller.today));
+    final tone = _index == 0 ? todayTone : VouchTone.rest;
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: PosterField(
-        tone: tone,
-        bottom: false,
-        child: TabSwitchTransition(
-          index: _index,
-          child: IndexedStack(
-            index: _index,
-            children: <Widget>[
-              isPartner ? const _PartnerHome() : const _OwnerHome(),
-              const HistoryScreen(),
-              const SettingsScreen(),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: VouchDock(
+    return VouchScaffold(
+      tone: tone,
+      body: IndexedStack(
         index: _index,
-        onSelected: _select,
+        children: <Widget>[
+          TickerMode(
+            enabled: _index == 0,
+            child: isPartner ? const _WitnessHome() : const _OwnerHome(),
+          ),
+          TickerMode(
+            enabled: _index == 1,
+            child: const HistoryScreen(),
+          ),
+          TickerMode(
+            enabled: _index == 2,
+            child: const SettingsScreen(),
+          ),
+        ],
+      ),
+      bottomBar: VouchNavShell(
+        index: _index,
+        onSelect: _select,
+        items: const <VouchNavItem>[
+          VouchNavItem(label: 'Today', glyph: VouchGlyph.calendar),
+          VouchNavItem(label: 'History', glyph: VouchGlyph.clock),
+          VouchNavItem(label: 'You', glyph: VouchGlyph.person),
+        ],
       ),
     );
   }
@@ -105,152 +116,434 @@ class _HomeShellState extends State<HomeShell> {
 // Shared pieces
 // ---------------------------------------------------------------------------
 
-class _PosterScroll extends StatelessWidget {
-  const _PosterScroll({required this.child});
+class _HomeScroll extends StatelessWidget {
+  const _HomeScroll({required this.child});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return TopFade(
+    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    return SafeArea(
+      bottom: false,
       child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
-          20,
-          14,
-          20,
-          114 + MediaQuery.paddingOf(context).bottom,
+          VouchSpace.gutter,
+          VouchSpace.x2,
+          VouchSpace.gutter,
+          VouchSpace.navHeight + bottom + VouchSpace.x10,
         ),
-        child: child,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            child,
+          ],
+        ),
       ),
     );
   }
 }
 
-/// The promise, set as the poster's statement. The last word takes the
-/// field's accent colour.
-class _PromiseHead extends StatelessWidget {
-  const _PromiseHead({required this.track});
+/// Staggered entrance used by the page sections.
+class Reveal extends StatefulWidget {
+  const Reveal({
+    super.key,
+    required this.child,
+    this.index = 0,
+  });
 
-  final Track track;
+  final Widget child;
+  final int index;
+
+  @override
+  State<Reveal> createState() => _RevealState();
+}
+
+class _RevealState extends State<Reveal> {
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final delay = Duration(milliseconds: 50 + widget.index * 70);
+    Future<void>.delayed(delay, () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
-    final schedule = track.schedule;
+    if (VouchMotion.reduced(context)) return widget.child;
+    return SingleMotionBuilder(
+      value: _shown ? 1 : 0,
+      from: 0,
+      motion: _shown ? VouchMotion.enter : VouchMotion.fade,
+      builder: (context, value, child) => Opacity(
+        opacity: value.clamp(0.0, 1.0),
+        child: Transform.translate(
+          offset: Offset(0, (1 - value) * 18),
+          child: child,
+        ),
+      ),
+      child: widget.child,
+    );
+  }
+}
 
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer({required this.line, required this.caption});
+
+  final String line;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            PosterLabel('the promise', color: style.ink),
-            const Spacer(),
-            PosterLabel(
-              schedule == null
-                  ? 'no clock'
-                  : '${schedule.kind.shortLabel.toUpperCase()} / ${schedule.clockLabel.toUpperCase()}',
-              size: 8.5,
-              tracking: 1.1,
-            ),
-          ],
-        ),
-        const SizedBox(height: 13),
-        PosterHeadline(
-          track.promise,
-          size: 46,
-          accentTail: 1,
-          maxLines: 4,
-        ),
-        if (track.promiseNote?.trim().isNotEmpty ?? false) ...<Widget>[
-          const SizedBox(height: 12),
-          Text(
-            '“${track.promiseNote!.trim()}”',
-            style: TextStyle(
-              fontFamily: 'InstrumentSans',
-              fontSize: 14,
-              height: 1.4,
-              color: style.muted,
-            ),
-          ),
-        ],
+        Container(height: 1, color: theme.line),
+        const SizedBox(height: 16),
+        Text(line, style: VouchType.body(theme.muted)),
+        const SizedBox(height: 4),
+        Text(caption, style: VouchType.caption(theme.faint)),
       ],
     );
   }
 }
 
-/// Two metadata columns under the headline, as on the posters.
-class _MetaPair extends StatelessWidget {
-  const _MetaPair({
-    required this.leftLabel,
-    required this.leftValue,
-    required this.rightLabel,
-    required this.rightValue,
-  });
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.controller, required this.caption});
 
-  final String leftLabel;
-  final String leftValue;
-  final String rightLabel;
-  final String rightValue;
+  final TrackController controller;
+  final String caption;
 
   @override
   Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
+    final theme = VouchScope.of(context);
+    final stats = controller.stats;
+    final tone = toneForDay(controller.dayState(controller.today));
+    final accent = toneColor(context, tone);
+    final percent = stats.elapsed == 0 ? 0 : stats.completionPercent;
 
-    Widget cell(String label, String value) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            PosterLabel(label, color: style.muted, size: 8.5, tracking: 1.2),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'InstrumentSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-                letterSpacing: -0.1,
-                color: style.ink,
-                fontVariations: const <FontVariation>[
-                  FontVariation('wght', 600),
+    return GlassCard(
+      radius: VouchRadius.card,
+      padding: const EdgeInsets.fromLTRB(20, 20, 18, 18),
+      glow: true,
+      tint: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'DAY STREAK',
+                      style: VouchType.label(theme.muted, size: 9.5),
+                    ),
+                    const SizedBox(height: 12),
+                    DotMatrixNumber(
+                      stats.currentStreak,
+                      height: 54,
+                      color: theme.ink,
+                      dim: accent,
+                    ),
+                    const SizedBox(height: 14),
+                    StatusChip(label: caption, tone: tone),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 18),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  VerticalRuler(
+                    value: stats.completionRate,
+                    height: 86,
+                    color: accent,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '$percent%',
+                    style: VouchType.title(theme.ink).copyWith(fontSize: 22),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'KEPT',
+                    style: VouchType.label(theme.faint, size: 8.5),
+                  ),
                 ],
               ),
-            ),
-          ],
-        );
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(child: cell(leftLabel, leftValue)),
-        const SizedBox(width: 16),
-        Expanded(child: cell(rightLabel, rightValue)),
-      ],
+            ],
+          ),
+          const SizedBox(height: 20),
+          _Sparkline(controller: controller),
+        ],
+      ),
     );
   }
 }
 
-Color _stateColor(VouchDayState state) => switch (state) {
-      VouchDayState.completed => PosterColors.kelly,
-      VouchDayState.missed => PosterColors.coral,
-      VouchDayState.pending => PosterColors.cobalt,
-      VouchDayState.rest => VouchColors.mist,
-      VouchDayState.upcoming => VouchColors.mist,
-    };
+class _Sparkline extends StatelessWidget {
+  const _Sparkline({required this.controller});
 
-String _stateCode(VouchDayState state) => switch (state) {
-      VouchDayState.completed => 'kept',
-      VouchDayState.missed => 'missed',
-      VouchDayState.pending => 'open',
-      VouchDayState.rest => 'rest',
-      VouchDayState.upcoming => 'next',
-    };
+  final TrackController controller;
 
-/// Three solid-colour shortcuts — the flat email cards from the posters,
-/// reduced to call, WhatsApp and SMS.
-class _ReachStrip extends StatelessWidget {
-  const _ReachStrip({
+  @override
+  Widget build(BuildContext context) {
+    final days = <DateTime>[
+      for (var offset = 6; offset >= 0; offset--)
+        dateAt(controller.today, -offset),
+    ];
+    return SizedBox(
+      height: 34,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          for (final date in days)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                child: ColoredBox(
+                  color: const Color(0x00000000),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: AnimatedContainer(
+                      duration: VouchDurations.base,
+                      curve: Curves.easeOutCubic,
+                      height: _height(controller.dayState(date)),
+                      decoration: BoxDecoration(
+                        color: toneColor(
+                          context,
+                          toneForDay(controller.dayState(date)),
+                        ).withValues(
+                          alpha: controller.dayState(date) ==
+                                  VouchDayState.upcoming
+                              ? 0.14
+                              : 0.85,
+                        ),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  double _height(VouchDayState state) => switch (state) {
+        VouchDayState.completed => 34,
+        VouchDayState.missed => 18,
+        VouchDayState.pending => 11,
+        VouchDayState.rest => 6,
+        VouchDayState.upcoming => 4,
+      };
+}
+
+class _WeekCard extends StatelessWidget {
+  const _WeekCard({required this.controller, required this.height});
+
+  final TrackController controller;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    final days = <WeekStripDay>[
+      for (var offset = 6; offset >= 0; offset--)
+        WeekStripDay(
+          date: dateAt(controller.today, -offset),
+          state: controller.dayState(dateAt(controller.today, -offset)),
+        ),
+    ];
+    return GlassCard(
+      radius: VouchRadius.medium,
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+      child: SizedBox(
+        height: height,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Text(
+                'THIS WEEK',
+                style: VouchType.label(theme.muted, size: 9),
+              ),
+            ),
+            const Spacer(),
+            WeekStrip(
+              days: days,
+              today: controller.today,
+              onTap: (day) => showDayDetailSheet(
+                context,
+                date: day.date,
+                entry: controller.days[dayKey(day.date)],
+                state: day.state,
+                today: controller.today,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoteCard extends StatelessWidget {
+  const _NoteCard({
+    required this.height,
+    required this.note,
+    required this.fallback,
+    required this.onEdit,
+  });
+
+  final double height;
+  final String? note;
+  final String fallback;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    final hasNote = note?.trim().isNotEmpty ?? false;
+    return GlassCard(
+      radius: VouchRadius.medium,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      onTap: onEdit,
+      child: SizedBox(
+        height: height,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Text(
+                  'NOTE',
+                  style: VouchType.label(theme.muted, size: 9),
+                ),
+                const Spacer(),
+                if (hasNote)
+                  Text(
+                    'Edit',
+                    style: VouchType.bodyStrong(theme.ink)
+                        .copyWith(fontSize: 12),
+                  )
+                else
+                  const VouchIcon(
+                    VouchGlyph.plus,
+                    size: 14,
+                    color: Color(0xFFA2A5AE),
+                  ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              hasNote ? note!.trim() : fallback,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: (hasNote
+                      ? VouchType.body(theme.ink)
+                      : VouchType.caption(theme.faint))
+                  .copyWith(fontSize: hasNote ? 14 : 12.5, height: 1.3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WitnessTile extends StatelessWidget {
+  const _WitnessTile({
+    required this.height,
+    required this.name,
+    required this.status,
+    required this.tone,
+    this.onTap,
+  });
+
+  final double height;
+  final String name;
+  final String status;
+  final VouchTone tone;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    return GlassCard(
+      radius: VouchRadius.medium,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      onTap: onTap,
+      child: SizedBox(
+        height: height,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Text(
+                  'WITNESS',
+                  style: VouchType.label(theme.muted, size: 9),
+                ),
+                const Spacer(),
+                VouchAvatar(initials: _initials(name), size: 24),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: VouchType.cardTitle(theme.ink).copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: toneColor(context, tone),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    status,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: VouchType.caption(theme.muted).copyWith(fontSize: 11.5),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReachActions extends StatelessWidget {
+  const _ReachActions({
     required this.name,
     required this.phone,
     required this.message,
@@ -262,12 +555,15 @@ class _ReachStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = (phone?.trim().isNotEmpty ?? false);
+    final theme = VouchScope.of(context);
+    final enabled = phone?.trim().isNotEmpty ?? false;
 
-    Widget tile(IconData icon, String label, Color color) => Expanded(
-          child: Opacity(
-            opacity: enabled ? 1 : 0.38,
-            child: PressableSpring(
+    Widget action(VouchGlyph glyph, String label) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            CircleAction(
+              glyph: glyph,
+              size: 46,
               onTap: enabled
                   ? () => showContactSheet(
                         context,
@@ -276,168 +572,22 @@ class _ReachStrip extends StatelessWidget {
                         message: message,
                       )
                   : null,
-              enabled: enabled,
-              pressedScale: 0.96,
-              child: Container(
-                height: 62,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(icon, size: 18, color: PosterColors.cream),
-                    const SizedBox(height: 5),
-                    Text(
-                      label.toUpperCase(),
-                      style: const TextStyle(
-                        fontFamily: 'SpaceMono',
-                        fontSize: 7.5,
-                        letterSpacing: 1.1,
-                        color: PosterColors.cream,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
-          ),
+            const SizedBox(height: 6),
+            Text(label, style: VouchType.label(theme.faint, size: 8)),
+          ],
         );
 
-    return Row(
-      children: <Widget>[
-        tile(Icons.call_rounded, 'call', PosterColors.cobalt),
-        const SizedBox(width: 8),
-        tile(Icons.chat_bubble_rounded, 'whatsapp', PosterColors.kelly),
-        const SizedBox(width: 8),
-        tile(Icons.sms_rounded, 'sms', PosterColors.coral),
-      ],
-    );
-  }
-}
-
-/// Seven measured days — each one a tick on the card.
-class _WeekCard extends StatelessWidget {
-  const _WeekCard({required this.controller});
-
-  final TrackController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
-    final dates = <DateTime>[
-      for (var offset = 6; offset >= 0; offset--)
-        dateAt(controller.today, -offset),
-    ];
-
-    return PosterCard(
-      padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          for (final date in dates)
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => showDayDetailSheet(
-                  context,
-                  date: date,
-                  entry: controller.days[dayKey(date)],
-                  state: controller.dayState(date),
-                  today: controller.today,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    children: <Widget>[
-                      Text(
-                        shortWeekday(date).substring(0, 1).toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: 'SpaceMono',
-                          fontSize: 8,
-                          letterSpacing: 0.5,
-                          color: style.cardMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: dayKey(date) == controller.todayKey ? 5 : 4,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: dayKey(date) == controller.todayKey
-                              ? style.accent == PosterColors.cream
-                                  ? PosterColors.cobalt
-                                  : style.accent
-                              : controller.dayState(date) ==
-                                      VouchDayState.pending
-                                  ? style.cardInk.withValues(alpha: 0.2)
-                                  : _stateColor(controller.dayState(date)),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: dayKey(date) == controller.todayKey
-                              ? style.cardInk
-                              : style.cardMuted,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 600),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          action(VouchGlyph.phone, 'CALL'),
+          action(VouchGlyph.message, 'WHATSAPP'),
+          action(VouchGlyph.mail, 'SMS'),
         ],
       ),
-    );
-  }
-}
-
-class _StatsCards extends StatelessWidget {
-  const _StatsCards({required this.controller});
-
-  final TrackController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = controller.stats;
-
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: PosterStatCard(
-            value: '${stats.bestStreak}',
-            label: 'best streak',
-            color: PosterColors.acid,
-            foreground: PosterColors.ink,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: PosterStatCard(
-            value: '${stats.completed}',
-            label: 'days kept',
-            color: PosterColors.kelly,
-            foreground: PosterColors.cream,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: PosterStatCard(
-            value: stats.elapsed == 0 ? '—' : '${stats.completionPercent}%',
-            label: 'kept rate',
-          ),
-        ),
-      ],
     );
   }
 }
@@ -449,7 +599,7 @@ class _ReminderLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = PosterStyle.of(context);
+    final theme = VouchScope.of(context);
     final schedule = controller.track?.schedule;
     final next = controller.nextReminder;
     final remaining = controller.timeToNextReminder;
@@ -462,22 +612,54 @@ class _ReminderLine extends StatelessWidget {
 
     return Row(
       children: <Widget>[
-        Container(width: 7, height: 7, color: style.accent),
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: theme.accent,
+            shape: BoxShape.circle,
+          ),
+        ),
         const SizedBox(width: 9),
         Expanded(
           child: Text(
             label,
-            style: TextStyle(
-              fontFamily: 'InstrumentSans',
-              fontSize: 12,
-              height: 1.3,
-              color: style.muted,
-            ),
+            style: VouchType.caption(theme.muted).copyWith(fontSize: 12),
           ),
         ),
         if (remaining != null)
-          PosterLabel(countdownLabel(remaining), color: style.ink, size: 8.5),
+          Text(
+            countdownLabel(remaining),
+            style: VouchType.label(theme.ink, size: 9),
+          ),
       ],
+    );
+  }
+}
+
+class _StatusAction extends StatelessWidget {
+  const _StatusAction({required this.controller, required this.caption});
+
+  final TrackController controller;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    return CircleAction(
+      glyph: controller.todayEntry?.isMarked ?? false
+          ? VouchGlyph.check
+          : VouchGlyph.dots,
+      size: 54,
+      foreground: theme.accent,
+      onTap: () => VouchToast.show(
+        context,
+        caption,
+        glyph: controller.todayEntry?.isMarked ?? false
+            ? VouchGlyph.checkCircle
+            : VouchGlyph.clock,
+        accent: theme.accent,
+      ),
     );
   }
 }
@@ -534,16 +716,15 @@ class _OwnerHomeState extends State<_OwnerHome> {
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
     final track = controller.track;
+    final theme = VouchScope.of(context);
     if (track == null) {
-      return const Center(child: VouchLoader());
+      return Center(child: VouchLoader(color: theme.ink));
     }
-    final style = PosterStyle.of(context);
     final state = controller.dayState(controller.today);
     final entry = controller.todayEntry;
     final stats = controller.stats;
     final partner = track.partnerName ?? 'Your partner';
     final partnerFirst = track.partnerFirstName;
-    final phone = track.partnerPhone;
     final schedule = track.schedule;
     final note = entry?.note?.trim();
     final hasNote = note?.isNotEmpty ?? false;
@@ -556,257 +737,182 @@ class _OwnerHomeState extends State<_OwnerHome> {
       VouchDayState.upcoming => 'Upcoming',
     };
 
-    return _PosterScroll(
+    final marked = entry?.isMarked ?? false;
+    final witnessTone = !marked
+        ? VouchTone.pending
+        : entry?.status == DayStatus.completed
+            ? VouchTone.kept
+            : VouchTone.missed;
+    final witnessStatus = !marked
+        ? 'Waiting on their mark.'
+        : <String?>[
+            entry?.method?.label,
+            entry?.markedAt == null
+                ? null
+                : DateFormat('h:mm a').format(entry!.markedAt!.toLocal()),
+          ].whereType<String>().join(' · ');
+
+    return _HomeScroll(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          PosterTopBar(
-            right:
-                '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (001)',
-            trailing: VouchAvatar(
-              name: track.ownerFirstName,
-              photoUrl: track.ownerPhotoUrl,
-              size: 32,
+          Reveal(
+            index: 0,
+            child: VouchTopBar(
+              annotation:
+                  '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (001)',
+              trailing: VouchAvatar(
+                initials: _initials(track.ownerFirstName),
+                size: 34,
+              ),
             ),
           ),
-          const SizedBox(height: 28),
-          _PromiseHead(track: track),
-          const SizedBox(height: 20),
-          _MetaPair(
-            leftLabel: 'witness',
-            leftValue: partner,
-            rightLabel: 'rhythm',
-            rightValue: schedule == null
-                ? 'Not set'
-                : '${schedule.kind.shortLabel} · ${schedule.clockLabel}',
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: PromiseOrb(
-              state: state,
-              streak: stats.currentStreak,
-              completion: stats.completionRate,
-              caption: caption,
-            ),
-          ),
-          const SizedBox(height: 26),
-          PosterCard(
+          const SizedBox(height: 30),
+          Reveal(
+            index: 1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                Text(track.promise, style: VouchType.hero(theme.ink)),
+                const SizedBox(height: 12),
                 Row(
                   children: <Widget>[
-                    PosterLabel('today / ${_stateCode(state)}',
-                        color: style.cardMuted, size: 8.5, tracking: 1.2),
-                    const Spacer(),
-                    PosterTag(
-                      caption,
-                      color: _stateColor(state).withValues(alpha: 0.14),
-                      foreground: _stateColor(state),
-                    ),
-                    if (hasNote) ...<Widget>[
-                      const SizedBox(width: 4),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(40, 30),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          foregroundColor: style.cardInk,
-                          textStyle: const TextStyle(
-                            fontFamily: 'InstrumentSans',
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onPressed: () => _editNote(controller, track),
-                        child: const Text('Edit'),
+                    Container(
+                      width: 26,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: theme.accent,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'every day',
+                      style: VouchType.body(theme.muted)
+                          .copyWith(fontSize: 15),
+                    ),
+                    const Spacer(),
+                    Text(
+                      schedule == null
+                          ? 'NO CLOCK'
+                          : '${schedule.kind.shortLabel.toUpperCase()} / ${schedule.clockLabel.toUpperCase()}',
+                      style: VouchType.label(theme.faint, size: 8.5),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                if (hasNote)
-                  Text(
-                    '“$note”',
-                    style: TextStyle(
-                      fontFamily: 'InstrumentSans',
-                      fontSize: 16,
-                      height: 1.38,
-                      letterSpacing: -0.2,
-                      color: style.cardInk,
+              ],
+            ),
+          ),
+          const SizedBox(height: 26),
+          Reveal(index: 2, child: _HeroCard(controller: controller, caption: caption)),
+          const SizedBox(height: 14),
+          Reveal(
+            index: 3,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: StatTile(
+                    value: '${stats.completed}',
+                    label: 'days kept',
+                    tone: VouchTone.kept,
+                    height: 112,
+                    trailing: Text(
+                      'of ${stats.elapsed}',
+                      style: VouchType.mono(theme.faint, size: 9),
                     ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Nothing logged yet.',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.6,
-                          height: 1.1,
-                          color: style.cardInk,
-                          fontVariations: const <FontVariation>[
-                            FontVariation('wght', 700),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        state == VouchDayState.rest
-                            ? 'No promise today. Add a note if you did it anyway.'
-                            : 'Write it before $partnerFirst checks in.',
-                        style: TextStyle(
-                          fontFamily: 'InstrumentSans',
-                          fontSize: 12.5,
-                          height: 1.35,
-                          color: style.cardMuted,
-                        ),
-                      ),
-                    ],
                   ),
-                const SizedBox(height: 14),
-                if (!hasNote)
-                  PosterPill(
-                    label: 'Write today’s note',
-                    icon: Icons.edit_note_rounded,
-                    compact: true,
-                    arrow: false,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _WitnessTile(
+                    height: 82,
+                    name: partner,
+                    status: witnessStatus,
+                    tone: witnessTone,
+                    onTap: () => showContactSheet(
+                      context,
+                      name: partnerFirst,
+                      phone: track.partnerPhone,
+                      message:
+                          'Hey $partnerFirst, checking in on my Vouch promise — ${track.promise}.',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Reveal(
+            index: 4,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: _NoteCard(
+                    height: 82,
+                    note: note,
+                    fallback: state == VouchDayState.rest
+                        ? 'Rest day. Add a note if you did it anyway.'
+                        : 'Write it before $partnerFirst checks in.',
+                    onEdit: () => _editNote(controller, track),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _WeekCard(controller: controller, height: 82),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Reveal(
+            index: 5,
+            child: Row(
+              children: <Widget>[
+                CircleAction(
+                  glyph: VouchGlyph.close,
+                  size: 54,
+                  onTap: () => showContactSheet(
+                    context,
+                    name: partnerFirst,
+                    phone: track.partnerPhone,
+                    message:
+                        'Hey $partnerFirst, checking in on my Vouch promise — ${track.promise}.',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: VouchButton(
+                    label: hasNote ? 'Edit note' : 'Add a note',
+                    glyph: hasNote ? VouchGlyph.edit : VouchGlyph.plus,
                     onPressed: () => _editNote(controller, track),
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          _ReachStrip(
-            name: partnerFirst,
-            phone: phone,
-            message:
-                'Hey $partnerFirst, checking in on my Vouch promise — ${track.promise}.',
-          ),
-          const SizedBox(height: 28),
-          PosterSectionLabel(
-            '01',
-            'the witness',
-            trailing: PosterTag(
-              !(entry?.isMarked ?? false)
-                  ? 'waiting'
-                  : entry!.status == DayStatus.completed
-                      ? 'kept'
-                      : 'missed',
-              color: !(entry?.isMarked ?? false)
-                  ? style.soft
-                  : _stateColor(
-                      entry!.status == DayStatus.completed
-                          ? VouchDayState.completed
-                          : VouchDayState.missed,
-                    )
-                      .withValues(alpha: 0.14),
-              foreground: !(entry?.isMarked ?? false)
-                  ? style.muted
-                  : _stateColor(
-                      entry!.status == DayStatus.completed
-                          ? VouchDayState.completed
-                          : VouchDayState.missed,
-                    ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          PosterCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    VouchAvatar(
-                      name: partner,
-                      photoUrl: track.partnerPhotoUrl,
-                      size: 44,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            partner,
-                            style: TextStyle(
-                              fontFamily: 'InstrumentSans',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.3,
-                              color: style.cardInk,
-                              fontVariations: const <FontVariation>[
-                                FontVariation('wght', 700),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            !(entry?.isMarked ?? false)
-                                ? 'Waiting on their mark.'
-                                : <String?>[
-                                    entry?.method?.label,
-                                    entry?.markedAt == null
-                                        ? null
-                                        : DateFormat('h:mm a').format(
-                                            entry!.markedAt!.toLocal(),
-                                          ),
-                                  ].whereType<String>().join(' · '),
-                            style: TextStyle(
-                              fontFamily: 'InstrumentSans',
-                              fontSize: 12.5,
-                              color: style.cardMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
-                if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Text(
-                    '“${entry!.partnerNote!.trim()}”',
-                    style: TextStyle(
-                      fontFamily: 'InstrumentSans',
-                      fontSize: 14.5,
-                      height: 1.4,
-                      color: style.cardInk,
-                    ),
-                  ),
-                ],
+                const SizedBox(width: 12),
+                _StatusAction(controller: controller, caption: caption),
               ],
             ),
           ),
-          const SizedBox(height: 26),
-          const PosterSectionLabel('02', 'this week'),
-          const SizedBox(height: 10),
-          _WeekCard(controller: controller),
-          const SizedBox(height: 16),
-          _StatsCards(controller: controller),
-          const SizedBox(height: 22),
-          _ReminderLine(controller: controller),
-          const SizedBox(height: 12),
-          const NotificationPermissionCard(),
-          const SizedBox(height: 26),
-          PosterFooter(
-            lead: 'Vouch',
-            muted: 'One promise, one witness.',
+          const SizedBox(height: 30),
+          Reveal(
+            index: 6,
+            child: Row(
+              children: <Widget>[
+                Expanded(child: _ReminderLine(controller: controller)),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            partner == 'Your partner'
-                ? 'One promise. One witness.'
-                : 'Witnessed by $partner.',
-            style: TextStyle(
-              fontFamily: 'SpaceMono',
-              fontSize: 9.5,
-              letterSpacing: 0.6,
-              color: style.muted,
+          const SizedBox(height: 14),
+          const NotificationPermissionCard(),
+          const SizedBox(height: 28),
+          Reveal(
+            index: 7,
+            child: _Footer(
+              line: partner == 'Your partner'
+                  ? 'One promise. One witness.'
+                  : 'Witnessed by $partner.',
+              caption: 'Only the witness closes the day.',
             ),
           ),
         ],
@@ -816,11 +922,11 @@ class _OwnerHomeState extends State<_OwnerHome> {
 }
 
 // ---------------------------------------------------------------------------
-// Partner home
+// Witness home
 // ---------------------------------------------------------------------------
 
-class _PartnerHome extends StatelessWidget {
-  const _PartnerHome();
+class _WitnessHome extends StatelessWidget {
+  const _WitnessHome();
 
   Future<void> _mark(BuildContext context) async {
     final controller = context.read<TrackController>();
@@ -857,267 +963,291 @@ class _PartnerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<TrackController>();
     final track = controller.track;
+    final theme = VouchScope.of(context);
     if (track == null) {
-      return const Center(child: VouchLoader());
+      return Center(child: VouchLoader(color: theme.ink));
     }
-    final style = PosterStyle.of(context);
     final entry = controller.todayEntry;
     final state = controller.dayState(controller.today);
     final marked = entry?.isMarked ?? false;
     final completed = entry?.status == DayStatus.completed;
     final ownerFirst = track.ownerFirstName;
-    final schedule = track.schedule;
     final hasNote = entry?.hasNote ?? false;
-    final accent = completed ? PosterColors.kelly : PosterColors.coral;
+    final caption = switch (state) {
+      VouchDayState.completed => 'Kept today',
+      VouchDayState.missed => 'Missed today',
+      VouchDayState.pending => 'Awaiting your mark',
+      VouchDayState.rest => 'Rest day',
+      VouchDayState.upcoming => 'Upcoming',
+    };
 
-    return _PosterScroll(
+    return _HomeScroll(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          PosterTopBar(
-            right:
-                '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (002)',
-            trailing: VouchAvatar(
-              name: ownerFirst,
-              photoUrl: track.ownerPhotoUrl,
-              size: 32,
+          Reveal(
+            index: 0,
+            child: VouchTopBar(
+              annotation:
+                  '${DateFormat('d MMM').format(controller.today).toUpperCase()} / (002)',
+              trailing: VouchAvatar(
+                initials: _initials(ownerFirst),
+                size: 34,
+              ),
             ),
           ),
-          const SizedBox(height: 28),
-          _PromiseHead(track: track),
-          const SizedBox(height: 20),
-          _MetaPair(
-            leftLabel: 'witnessing',
-            leftValue: ownerFirst,
-            rightLabel: 'rhythm',
-            rightValue: schedule == null
-                ? 'Not set'
-                : '${schedule.kind.shortLabel} · ${schedule.clockLabel}',
+          const SizedBox(height: 30),
+          Reveal(
+            index: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Text('WITNESSING', style: VouchType.label(theme.accent, size: 9.5)),
+                    const Spacer(),
+                    Text(
+                      track.schedule == null
+                          ? 'NO CLOCK'
+                          : track.schedule!.clockLabel.toUpperCase(),
+                      style: VouchType.label(theme.faint, size: 8.5),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  state == VouchDayState.rest
+                      ? 'Rest day.'
+                      : 'Did $ownerFirst keep it?',
+                  style: VouchType.hero(theme.ink),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  state == VouchDayState.rest
+                      ? 'No promise is scheduled today.'
+                      : 'Ask, then record the answer.',
+                  style: VouchType.body(theme.muted),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 26),
-          PosterSectionLabel(
-            '01',
-            'today',
-            trailing: PosterTag(
-              !marked ? 'waiting' : completed ? 'kept' : 'missed',
-              color: marked
-                  ? accent.withValues(alpha: 0.14)
-                  : style.soft,
-              foreground: marked ? accent : style.muted,
+          Reveal(index: 2, child: _HeroCard(controller: controller, caption: caption)),
+          const SizedBox(height: 16),
+          Reveal(
+            index: 3,
+            child: marked
+                ? GlassCard(
+                    tint: completed ? theme.kept : theme.missed,
+                    glow: true,
+                    child: _MarkedCard(
+                      completed: completed,
+                      entry: entry,
+                      onChange: () => _mark(context),
+                    ),
+                  )
+                : GlassCard(
+                    tint: toneColor(context, VouchTone.pending),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'TODAY',
+                          style: VouchType.label(theme.muted, size: 9),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Close the day',
+                          style: VouchType.title(theme.ink).copyWith(fontSize: 24),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Only you can close the day.',
+                          style: VouchType.caption(theme.muted),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: <Widget>[
+                            CircleAction(
+                              glyph: VouchGlyph.check,
+                              size: 50,
+                              foreground: theme.kept,
+                              onTap: () => _mark(context),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: VouchButton(
+                                label: 'Mark today',
+                                onPressed: () => _mark(context),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            CircleAction(
+                              glyph: VouchGlyph.close,
+                              size: 50,
+                              foreground: theme.missed,
+                              onTap: () => _mark(context),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 18),
+          Reveal(
+            index: 4,
+            child: _ReachActions(
+              name: ownerFirst,
+              phone: track.ownerPhone,
+              message:
+                  'Hey $ownerFirst, checking in on your Vouch promise: ${track.promise}. Did you get it done today?',
             ),
           ),
-          const SizedBox(height: 10),
-          if (!marked)
-            PosterCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        width: 46,
-                        height: 46,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: style.cardInk,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          '?',
-                          style: TextStyle(
-                            fontFamily: 'InstrumentSans',
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: PosterColors.cream,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              state == VouchDayState.rest
-                                  ? 'Rest day.'
-                                  : 'Did $ownerFirst keep it?',
-                              style: TextStyle(
-                                fontFamily: 'InstrumentSans',
-                                fontSize: 19,
-                                fontWeight: FontWeight.w700,
-                                height: 1.1,
-                                letterSpacing: -0.6,
-                                color: style.cardInk,
-                                fontVariations: const <FontVariation>[
-                                  FontVariation('wght', 700),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              state == VouchDayState.rest
-                                  ? 'No promise is scheduled today.'
-                                  : 'Ask, then record the answer.',
-                              style: TextStyle(
-                                fontFamily: 'InstrumentSans',
-                                fontSize: 12.5,
-                                color: style.cardMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  PosterPill(
-                    label: 'Mark today',
-                    icon: Icons.fact_check_rounded,
-                    color: style.cardInk,
-                    foreground: PosterColors.cream,
-                    arrowColor: PosterColors.acid,
-                    arrowForeground: PosterColors.ink,
-                    onPressed: () => _mark(context),
-                  ),
-                ],
-              ),
-            )
-          else
-            PosterCard(
-              color: accent,
-              foreground: PosterColors.cream,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: PosterColors.cream.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          completed
-                              ? Icons.check_rounded
-                              : Icons.close_rounded,
-                          color: PosterColors.cream,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              completed ? 'Kept' : 'Missed',
-                              style: const TextStyle(
-                                fontFamily: 'InstrumentSans',
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                height: 1.05,
-                                color: PosterColors.cream,
-                                fontVariations: <FontVariation>[
-                                  FontVariation('wght', 700),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              <String?>[
-                                entry?.method?.label,
-                                entry?.markedAt == null
-                                    ? null
-                                    : DateFormat('h:mm a').format(
-                                        entry!.markedAt!.toLocal(),
-                                      ),
-                              ].whereType<String>().join(' · '),
-                              style: TextStyle(
-                                fontFamily: 'InstrumentSans',
-                                fontSize: 12.5,
-                                color: PosterColors.cream.withValues(
-                                  alpha: 0.72,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
-                    const SizedBox(height: 12),
+          const SizedBox(height: 22),
+          if (hasNote) ...<Widget>[
+            Reveal(
+              index: 5,
+              child: GlassCard(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     Text(
-                      '“${entry!.partnerNote!.trim()}”',
-                      style: const TextStyle(
-                        fontFamily: 'InstrumentSans',
-                        fontSize: 14.5,
-                        height: 1.4,
-                        color: PosterColors.cream,
+                      'THEIR NOTE',
+                      style: VouchType.label(theme.muted, size: 9),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      entry!.note!.trim(),
+                      style: VouchType.body(theme.ink).copyWith(
+                        fontSize: 16,
+                        height: 1.45,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 14),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: PosterPill(
-                          label: 'Change mark',
-                          icon: Icons.edit_rounded,
-                          compact: true,
-                          arrow: false,
-                          color: PosterColors.cream,
-                          foreground: PosterColors.ink,
-                          onPressed: () => _mark(context),
-                        ),
-                      ),
-                    ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          Reveal(
+            index: 6,
+            child: _WitnessTile(
+              height: 78,
+              name: ownerFirst,
+              status: '${controller.stats.completed} days kept · '
+                  '${controller.stats.currentStreak} in a row',
+              tone: VouchTone.kept,
+              onTap: () => showContactSheet(
+                context,
+                name: ownerFirst,
+                phone: track.ownerPhone,
+                message:
+                    'Hey $ownerFirst, checking in on your Vouch promise: ${track.promise}. Did you get it done today?',
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Reveal(
+            index: 7,
+            child: _WeekCard(controller: controller, height: 82),
+          ),
+          const SizedBox(height: 18),
+          const NotificationPermissionCard(),
+          const SizedBox(height: 24),
+          Reveal(
+            index: 8,
+            child: const _Footer(
+              line: 'Witness, not judge.',
+              caption: 'Only the witness closes the day.',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarkedCard extends StatelessWidget {
+  const _MarkedCard({
+    required this.completed,
+    required this.entry,
+    required this.onChange,
+  });
+
+  final bool completed;
+  final DayEntry? entry;
+  final VoidCallback onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    final accent = completed ? theme.kept : theme.missed;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: 0.4)),
+              ),
+              child: Center(
+                child: VouchIcon(
+                  completed ? VouchGlyph.check : VouchGlyph.close,
+                  size: 20,
+                  color: accent,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    completed ? 'Kept' : 'Missed',
+                    style: VouchType.title(theme.ink).copyWith(fontSize: 24),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    <String?>[
+                      entry?.method?.label,
+                      entry?.markedAt == null
+                          ? null
+                          : DateFormat('h:mm a').format(
+                              entry!.markedAt!.toLocal(),
+                            ),
+                    ].whereType<String>().join(' · '),
+                    style: VouchType.caption(theme.muted),
                   ),
                 ],
               ),
             ),
-          const SizedBox(height: 16),
-          _ReachStrip(
-            name: ownerFirst,
-            phone: track.ownerPhone,
-            message:
-                'Hey $ownerFirst, checking in on your Vouch promise: ${track.promise}. Did you get it done today?',
-          ),
-          if (hasNote) ...<Widget>[
-            const SizedBox(height: 26),
-            const PosterSectionLabel('02', 'their words'),
-            const SizedBox(height: 10),
-            PosterCard(
-              child: Text(
-                '“${entry!.note!.trim()}”',
-                style: TextStyle(
-                  fontFamily: 'InstrumentSans',
-                  fontSize: 16.5,
-                  height: 1.4,
-                  letterSpacing: -0.2,
-                  color: style.cardInk,
-                ),
-              ),
-            ),
           ],
-          const SizedBox(height: 26),
-          PosterSectionLabel(hasNote ? '03' : '02', 'this week'),
-          const SizedBox(height: 10),
-          _WeekCard(controller: controller),
-          const SizedBox(height: 16),
-          _StatsCards(controller: controller),
-          const SizedBox(height: 22),
-          _ReminderLine(controller: controller),
-          const SizedBox(height: 12),
-          const NotificationPermissionCard(),
-          const SizedBox(height: 26),
-          PosterFooter(
-            lead: 'Witness, not judge.',
-            muted: 'Only the witness closes the day.',
+        ),
+        if (entry?.partnerNote?.trim().isNotEmpty ?? false) ...<Widget>[
+          const SizedBox(height: 14),
+          Text(
+            entry!.partnerNote!.trim(),
+            style: VouchType.body(theme.ink),
           ),
         ],
-      ),
+        const SizedBox(height: 16),
+        VouchButton(
+          label: 'Change mark',
+          glyph: VouchGlyph.edit,
+          style: VouchButtonStyle.glass,
+          compact: true,
+          height: 44,
+          onPressed: onChange,
+        ),
+      ],
     );
   }
 }

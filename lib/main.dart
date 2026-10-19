@@ -1,11 +1,16 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'app.dart';
+import 'components/vouch_scaffold.dart';
+import 'components/vouch_icon.dart';
 import 'core/constants.dart';
+import 'design/vouch_theme.dart';
+import 'design/vouch_tokens.dart';
+import 'design/vouch_type.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/contact_service.dart';
@@ -16,7 +21,6 @@ import 'services/track_repository.dart';
 import 'state/auth_controller.dart';
 import 'state/theme_controller.dart';
 import 'state/track_controller.dart';
-import 'theme/vouch_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,9 +30,9 @@ Future<void> main() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarColor: Color(0x00000000),
+      systemNavigationBarColor: Color(0x00000000),
+      systemNavigationBarDividerColor: Color(0x00000000),
       systemNavigationBarContrastEnforced: false,
     ),
   );
@@ -80,7 +84,7 @@ Future<void> main() async {
   }
 }
 
-/// Last-resort UI when Firebase itself cannot start.
+/// Last-resort UI when Firebase itself cannot start. Material-free.
 class _BootFailureApp extends StatelessWidget {
   const _BootFailureApp({required this.message});
 
@@ -88,11 +92,16 @@ class _BootFailureApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: VouchTheme.light(),
-      darkTheme: VouchTheme.dark(),
-      home: Scaffold(
+    return WidgetsApp(
+      color: VouchColors.canvas,
+      builder: (context, child) => VouchScope(
+        theme: VouchThemeData.dark,
+        tone: VouchTone.missed,
+        child: child ?? const SizedBox.shrink(),
+      ),
+      home: VouchScaffold(
+        tone: VouchTone.missed,
+        animateBackground: false,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -100,36 +109,41 @@ class _BootFailureApp extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  const Icon(
-                    Icons.cloud_off_rounded,
-                    size: 64,
-                    color: VouchColors.coral,
+                  Container(
+                    width: 76,
+                    height: 76,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: VouchColors.coral.withValues(alpha: 0.14),
+                      border: Border.all(
+                        color: VouchColors.coral.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const VouchIcon(
+                      VouchGlyph.closeCircle,
+                      size: 32,
+                      color: VouchColors.coral,
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
                   Text(
                     'Vouch could not start.',
-                    style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
+                    style: VouchType.title(VouchColors.ink),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
-                        ),
+                    style: VouchType.body(VouchColors.muted),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Check the Firebase configuration and that this build includes google-services.json.',
+                    'Check the Firebase configuration and that this build '
+                    'includes google-services.json.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
-                        ),
+                    style: VouchType.caption(VouchColors.faint),
                   ),
                 ],
               ),
