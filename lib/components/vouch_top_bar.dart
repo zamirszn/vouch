@@ -65,16 +65,28 @@ class VouchTopBar extends StatelessWidget {
       child: Row(
         children: <Widget>[
           leading ?? const VouchWordmark(),
-          const Spacer(),
-          if (annotation != null)
-            Padding(
-              padding: const EdgeInsets.only(right: VouchSpace.x3),
-              child: Text(
-                annotation!,
-                style: VouchType.label(theme.muted, size: 10),
-              ),
+          const SizedBox(width: VouchSpace.x3),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                if (annotation != null)
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: VouchSpace.x3),
+                      child: Text(
+                        annotation!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: VouchType.label(theme.muted, size: 10),
+                      ),
+                    ),
+                  ),
+                ?trailing,
+              ],
             ),
-          ?trailing,
+          ),
         ],
       ),
     );
@@ -123,7 +135,50 @@ class VouchBackBar extends StatelessWidget {
   }
 }
 
-class VouchAvatar extends StatelessWidget {  const VouchAvatar({
+/// Top bar for modal-style pages: a close circle plus wordmark.
+class VouchCloseBar extends StatelessWidget {
+  const VouchCloseBar({super.key, this.annotation});
+
+  final String? annotation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    return VouchTopBar(
+      annotation: annotation,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Pressable(
+            haptic: false,
+            semanticLabel: 'Close',
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.glassStrong,
+                border: Border.all(color: theme.line, width: 1),
+              ),
+              child: VouchIcon(
+                VouchGlyph.close,
+                size: 14,
+                color: theme.ink,
+              ),
+            ),
+          ),
+          const SizedBox(width: VouchSpace.x3),
+          const VouchWordmark(size: 12, tracking: 3),
+        ],
+      ),
+    );
+  }
+}
+
+class VouchAvatar extends StatelessWidget {
+  const VouchAvatar({
     super.key,
     required this.initials,
     this.size = 36,

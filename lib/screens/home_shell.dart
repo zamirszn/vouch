@@ -33,7 +33,7 @@ import '../models/track.dart';
 import '../services/notification_service.dart';
 import '../state/track_controller.dart';
 import '../widgets/celebration.dart';
-import '../widgets/contact_sheet.dart';
+import '../components/contact_panel.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../widgets/mark_sheet.dart';
 import '../widgets/note_editor_sheet.dart';

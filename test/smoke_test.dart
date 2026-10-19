@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:vouch/app.dart';
+import 'package:vouch/components/vouch_icon.dart';
 import 'package:vouch/models/track.dart';
 import 'package:vouch/services/contact_service.dart';
 import 'package:vouch/services/demo_repository.dart';
@@ -111,7 +112,11 @@ void main() {
     expect(find.text('What time?'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is VouchIcon && widget.glyph == VouchGlyph.close,
+      ),
+    );
     await pumpFrames(tester);
 
     await tester.tap(find.text('Today'));
