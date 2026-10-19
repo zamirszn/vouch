@@ -56,3 +56,6 @@ app.*.map.json
 /dist/
 /tool/browser/node_modules/
 /tool/browser/*.png
+
+# Copyrighted reference study material — never commit
+/design-reference/
