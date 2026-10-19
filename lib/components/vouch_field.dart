@@ -35,6 +35,7 @@ class VouchField extends StatefulWidget {
     this.suffix,
     this.autocorrect = true,
     this.enableSuggestions = true,
+    this.textAlign = TextAlign.start,
     this.padding = const EdgeInsets.symmetric(
       horizontal: VouchSpace.x4,
       vertical: VouchSpace.x3,
@@ -65,6 +66,7 @@ class VouchField extends StatefulWidget {
   final Widget? suffix;
   final bool autocorrect;
   final bool enableSuggestions;
+  final TextAlign textAlign;
   final EdgeInsetsGeometry padding;
   final double radius;
   final bool showCount;
@@ -153,6 +155,7 @@ class _VouchFieldState extends State<VouchField> {
                     padding: const EdgeInsets.only(top: 1),
                     child: Text(
                       widget.hint,
+                      textAlign: widget.textAlign,
                       style: (widget.hintStyle ?? textStyle).copyWith(
                         color: theme.faint,
                       ),
@@ -172,6 +175,7 @@ class _VouchFieldState extends State<VouchField> {
                       (multi ? TextInputType.multiline : TextInputType.text),
                   textInputAction: widget.textInputAction,
                   textCapitalization: widget.textCapitalization,
+                  textAlign: widget.textAlign,
                   autofocus: widget.autofocus,
                   readOnly: widget.readOnly,
                   obscureText: widget.obscureText,

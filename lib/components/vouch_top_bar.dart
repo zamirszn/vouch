@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 import '../design/vouch_theme.dart';
 import '../design/vouch_tokens.dart';
 import '../design/vouch_type.dart';
+import 'pressable.dart';
+import 'vouch_icon.dart';
 
 class VouchWordmark extends StatelessWidget {
   const VouchWordmark({
@@ -79,8 +81,49 @@ class VouchTopBar extends StatelessWidget {
   }
 }
 
-class VouchAvatar extends StatelessWidget {
-  const VouchAvatar({
+/// Top bar for pages pushed above the shell: back circle plus wordmark.
+class VouchBackBar extends StatelessWidget {
+  const VouchBackBar({super.key, this.annotation});
+
+  final String? annotation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = VouchScope.of(context);
+    return VouchTopBar(
+      annotation: annotation,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Pressable(
+            haptic: false,
+            semanticLabel: 'Back',
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.glassStrong,
+                border: Border.all(color: theme.line, width: 1),
+              ),
+              child: VouchIcon(
+                VouchGlyph.chevronLeft,
+                size: 15,
+                color: theme.ink,
+              ),
+            ),
+          ),
+          const SizedBox(width: VouchSpace.x3),
+          const VouchWordmark(size: 12, tracking: 3),
+        ],
+      ),
+    );
+  }
+}
+
+class VouchAvatar extends StatelessWidget {  const VouchAvatar({
     super.key,
     required this.initials,
     this.size = 36,

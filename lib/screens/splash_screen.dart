@@ -1,72 +1,94 @@
-/// Branded bootstrap screen: an ink poster with the wordmark set enormous
-/// and one acid line beneath it.
+/// Branded bootstrap screen: the wordmark set enormous on a dark stage.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
+import '../components/vouch_loader.dart';
+import '../components/vouch_scaffold.dart';
+import '../components/vouch_top_bar.dart';
 import '../core/constants.dart';
-import '../widgets/poster.dart';
-import '../widgets/vouch_loader.dart';
+import '../design/vouch_theme.dart';
+import '../design/vouch_tokens.dart';
+import '../design/vouch_type.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PosterField(
-        tone: PosterTone.ink,
-        bottom: false,
+    final theme = VouchScope.of(context);
+    return VouchScaffold(
+      tone: VouchTone.pending,
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+          padding: const EdgeInsets.fromLTRB(
+            VouchSpace.gutter,
+            VouchSpace.x3,
+            VouchSpace.gutter,
+            VouchSpace.x6,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const PosterTopBar(right: '(EST. MMXXVI)'),
+              const VouchTopBar(annotation: '(EST. MMXXVI)'),
               const Spacer(),
-              const PosterLabel('A small deal', size: 8.5),
-              const SizedBox(height: 14),
-              const PosterHeadline(
-                VouchConfig.appName,
-                size: 104,
-                height: 0.8,
-                color: PosterColors.cream,
+              Text(
+                'A SMALL DEAL',
+                style: VouchType.label(theme.muted, size: 8.5),
               ),
-              const SizedBox(height: 8),
-              const PosterHeadline(
+              const SizedBox(height: VouchSpace.x3),
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'VOUCH',
+                    style: VouchType.hero(theme.ink).copyWith(
+                      fontSize: 118,
+                      height: 0.8,
+                      letterSpacing: -6,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x2),
+              Text(
                 'one promise.',
-                size: 34,
-                height: 0.95,
-                color: PosterColors.acid,
+                style: VouchType.display(theme.accent).copyWith(
+                  fontSize: 34,
+                  letterSpacing: -1.2,
+                ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: VouchSpace.x5),
               Container(
                 width: 56,
                 height: 2,
-                color: PosterColors.cream.withValues(alpha: 0.4),
+                decoration: BoxDecoration(
+                  color: theme.lineStrong,
+                  borderRadius: BorderRadius.circular(1),
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: VouchSpace.x4),
               Text(
                 VouchConfig.tagline,
-                style: TextStyle(
-                  fontFamily: 'InstrumentSans',
-                  fontSize: 15,
-                  height: 1.4,
-                  color: PosterColors.cream.withValues(alpha: 0.62),
-                ),
+                style: VouchType.body(theme.muted)
+                    .copyWith(fontSize: 15, height: 1.4),
               ),
               const Spacer(),
               Row(
                 children: <Widget>[
-                  const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: VouchLoader(size: 18, color: PosterColors.acid),
+                  VouchLoader(size: 18, color: theme.accent, strokeWidth: 2),
+                  const SizedBox(width: VouchSpace.x3),
+                  Text(
+                    'SYNCING',
+                    style: VouchType.label(theme.accent, size: 10),
                   ),
-                  const SizedBox(width: 10),
-                  const PosterLabel('Syncing', color: PosterColors.acid),
                   const Spacer(),
-                  const PosterLabel('V.01'),
+                  Text(
+                    'V.01',
+                    style: VouchType.label(theme.faint, size: 10),
+                  ),
                 ],
               ),
             ],

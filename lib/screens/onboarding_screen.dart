@@ -1,219 +1,150 @@
-/// Choose: owner creating a promise, or partner joining one.
-///
-/// Page one is a butter poster; page two is the cream choice sheet. The
-/// liquid swipe between them is the whole interaction.
+/// Choose: promise owner or witness. Two cards, one deal.
 library;
 
-import 'package:flutter/material.dart';
-import 'package:liquid_swipe/liquid_swipe.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+import '../components/glass_card.dart';
+import '../components/reveal.dart';
+import '../components/vouch_icon.dart';
+import '../components/vouch_scaffold.dart';
+import '../components/vouch_top_bar.dart';
+import '../design/vouch_route.dart';
+import '../design/vouch_theme.dart';
+import '../design/vouch_tokens.dart';
+import '../design/vouch_type.dart';
 import '../state/auth_controller.dart';
-import '../widgets/poster.dart';
-import '../widgets/pressable_spring.dart';
-import '../widgets/vouch_avatar.dart';
 import 'create_track_screen.dart';
 import 'join_track_screen.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
-
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final LiquidController _controller = LiquidController();
-  int _page = 0;
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    final theme = VouchScope.of(context);
 
-    return Scaffold(
-      body: LiquidSwipe(
-        liquidController: _controller,
-        waveType: WaveType.liquidReveal,
-        enableSideReveal: true,
-        enableLoop: false,
-        slideIconWidget: _SwipeCue(page: _page),
-        preferDragFromRevealedArea: true,
-        onPageChangeCallback: (page) {
-          if (page != _page) setState(() => _page = page);
-        },
-        pages: <Widget>[
-          _PromisePage(auth: auth),
-          _RolePage(auth: auth),
-        ],
-      ),
-    );
-  }
-}
-
-class _SwipeCue extends StatelessWidget {
-  const _SwipeCue({required this.page});
-
-  final int page;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: const BoxDecoration(
-        color: PosterColors.ink,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.arrow_forward_rounded,
-        color: page == 0 ? PosterColors.acid : PosterColors.cream,
-        size: 22,
-      ),
-    );
-  }
-}
-
-class _PromisePage extends StatelessWidget {
-  const _PromisePage({required this.auth});
-
-  final AuthController auth;
-
-  @override
-  Widget build(BuildContext context) {
-    return PosterField(
-      tone: PosterTone.butter,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            PosterTopBar(
-              right: '(001)',
-              trailing: VouchAvatar(
-                name: auth.displayName,
-                photoUrl: auth.photoUrl,
-                size: 36,
-              ),
-            ),
-            const Spacer(),
-            const PosterLabel('A small deal', size: 8.5),
-            const SizedBox(height: 16),
-            const PosterHeadline('Make a\npromise.', size: 54),
-            const PosterHeadline('Name a witness.', size: 54, accentTail: 2),
-            const SizedBox(height: 22),
-            Container(
-              width: 56,
-              height: 2,
-              color: PosterColors.ink.withValues(alpha: 0.55),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'One promise. One person keeping you to it.',
-              style: TextStyle(
-                fontFamily: 'InstrumentSans',
-                fontSize: 15.5,
-                height: 1.4,
-                color: PosterColors.ink.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 40),
-            Row(
-              children: <Widget>[
-                const PosterLabel('Swipe', size: 9, tracking: 2.2),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: PosterColors.ink.withValues(alpha: 0.3),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const PosterLabel('(002)', size: 9),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RolePage extends StatelessWidget {
-  const _RolePage({required this.auth});
-
-  final AuthController auth;
-
-  @override
-  Widget build(BuildContext context) {
-    return PosterField(
-      tone: PosterTone.cream,
-      child: Builder(
-        builder: (context) {
-          final style = PosterStyle.of(context);
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                PosterTopBar(
-                  right: '(002)',
+    return VouchScaffold(
+      tone: VouchTone.pending,
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            VouchSpace.gutter,
+            VouchSpace.x3,
+            VouchSpace.gutter,
+            MediaQuery.viewPaddingOf(context).bottom + VouchSpace.x6,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Reveal(
+                index: 0,
+                child: VouchTopBar(
+                  annotation: '(001)',
                   trailing: VouchAvatar(
-                    name: auth.displayName,
-                    photoUrl: auth.photoUrl,
-                    size: 36,
+                    initials: _initials(auth.displayName),
+                    size: 34,
                   ),
                 ),
-                const SizedBox(height: 40),
-                const PosterHeadline('Which\nside?', size: 50, accentTail: 1),
-                const SizedBox(height: 12),
-                Text(
-                  'Two people. One promise. Pick the part you play.',
-                  style: TextStyle(
-                    fontFamily: 'InstrumentSans',
-                    fontSize: 14,
-                    height: 1.45,
-                    color: style.muted,
+              ),
+              const SizedBox(height: VouchSpace.x10),
+              Reveal(
+                index: 1,
+                child: Text(
+                  'A SMALL DEAL',
+                  style: VouchType.label(theme.muted, size: 8.5),
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x3),
+              Reveal(
+                index: 2,
+                child: Text.rich(
+                  TextSpan(
+                    style: VouchType.hero(theme.ink).copyWith(
+                      fontSize: 50,
+                      height: 0.94,
+                      letterSpacing: -2,
+                    ),
+                    children: <InlineSpan>[
+                      const TextSpan(text: 'Make a promise.\n'),
+                      TextSpan(
+                        text: 'Name a witness.',
+                        style: TextStyle(color: theme.accent),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 26),
-                _RoleCard(
+              ),
+              const SizedBox(height: VouchSpace.x4),
+              Container(
+                width: 56,
+                height: 2,
+                decoration: BoxDecoration(
+                  color: theme.lineStrong,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x4),
+              Reveal(
+                index: 3,
+                child: Text(
+                  'One promise. One person keeping you to it.',
+                  style: VouchType.body(theme.muted)
+                      .copyWith(fontSize: 15.5, height: 1.4),
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x8),
+              Reveal(
+                index: 4,
+                child: _RoleCard(
                   number: '01',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const CreateTrackScreen(),
-                    ),
-                  ),
-                  background: PosterColors.cobalt,
-                  foreground: PosterColors.cream,
-                  accent: PosterColors.acid,
-                  accentForeground: PosterColors.ink,
+                  glyph: VouchGlyph.star,
+                  tone: theme.pending,
                   title: 'I’m promising',
-                  body: 'Create the promise.',
-                ),
-                const SizedBox(height: 12),
-                _RoleCard(
-                  number: '02',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const JoinTrackScreen(),
-                    ),
+                  body: 'Create the promise and name your witness.',
+                  onTap: () => pushVouch(
+                    context,
+                    (context) => const CreateTrackScreen(),
                   ),
-                  background: PosterColors.butter,
-                  foreground: PosterColors.ink,
-                  accent: PosterColors.coral,
-                  accentForeground: PosterColors.cream,
+                ),
+              ),
+              const SizedBox(height: VouchSpace.x3),
+              Reveal(
+                index: 5,
+                child: _RoleCard(
+                  number: '02',
+                  glyph: VouchGlyph.eye,
+                  tone: theme.kept,
                   title: 'I’m witnessing',
-                  body: 'Join with a code.',
+                  body: 'Join with a code and set the rhythm.',
+                  onTap: () => pushVouch(
+                    context,
+                    (context) => const JoinTrackScreen(),
+                  ),
                 ),
-                const SizedBox(height: 30),
-                const PosterFooter(
-                  lead: 'Vouch',
-                  muted: 'One promise. One witness.',
+              ),
+              const SizedBox(height: VouchSpace.x8),
+              Reveal(
+                index: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(height: 1, color: theme.line),
+                    const SizedBox(height: VouchSpace.x4),
+                    Text('Vouch', style: VouchType.body(theme.muted)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'One promise. One witness.',
+                      style: VouchType.caption(theme.faint),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -222,94 +153,83 @@ class _RolePage extends StatelessWidget {
 class _RoleCard extends StatelessWidget {
   const _RoleCard({
     required this.number,
-    required this.onTap,
-    required this.background,
-    required this.foreground,
-    required this.accent,
-    required this.accentForeground,
+    required this.glyph,
+    required this.tone,
     required this.title,
     required this.body,
+    required this.onTap,
   });
 
   final String number;
-  final VoidCallback onTap;
-  final Color background;
-  final Color foreground;
-  final Color accent;
-  final Color accentForeground;
+  final VouchGlyph glyph;
+  final Color tone;
   final String title;
   final String body;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return PressableSpring(
+    final theme = VouchScope.of(context);
+    return GlassCard(
+      radius: VouchRadius.card,
+      padding: const EdgeInsets.fromLTRB(18, 16, 16, 18),
+      tint: tone,
+      glow: true,
       onTap: onTap,
-      pressedScale: 0.975,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 16, 16, 18),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Text(
-                  '($number)',
-                  style: TextStyle(
-                    fontFamily: 'SpaceMono',
-                    fontSize: 9,
-                    letterSpacing: 1.2,
-                    color: foreground.withValues(alpha: 0.6),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_outward_rounded,
-                    color: accentForeground,
-                    size: 18,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 26),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'InstrumentSans',
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                height: 0.95,
-                letterSpacing: -1.3,
-                color: foreground,
-                fontVariations: const <FontVariation>[
-                  FontVariation('wght', 700),
-                  FontVariation('wdth', 94),
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                '($number)',
+                style: VouchType.label(theme.faint, size: 9),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              body,
-              style: TextStyle(
-                fontFamily: 'InstrumentSans',
-                fontSize: 13,
-                height: 1.3,
-                color: foreground.withValues(alpha: 0.66),
+              const Spacer(),
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tone,
+                ),
+                child: VouchIcon(
+                  VouchGlyph.arrowUpRight,
+                  size: 18,
+                  color: VouchColors.paperInk,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: VouchSpace.x6),
+          Row(
+            children: <Widget>[
+              VouchIcon(glyph, size: 18, color: tone),
+              const SizedBox(width: VouchSpace.x2),
+              Text(
+                title,
+                style: VouchType.title(theme.ink)
+                    .copyWith(fontSize: 29, letterSpacing: -1.2),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: VouchType.caption(theme.muted)
+                .copyWith(fontSize: 13, height: 1.35),
+          ),
+        ],
       ),
     );
   }
+}
+
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }
