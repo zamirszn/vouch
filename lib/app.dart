@@ -17,6 +17,7 @@ import 'design/vouch_route.dart';
 import 'design/vouch_theme.dart';
 import 'design/vouch_tokens.dart';
 import 'design/vouch_type.dart';
+import 'screens/gallery_screen.dart';
 import 'screens/root_gate.dart';
 import 'services/contact_service.dart';
 import 'services/notification_service.dart';
@@ -114,7 +115,9 @@ class _VouchAppState extends State<VouchApp> with WidgetsBindingObserver {
               title: VouchConfig.appName,
               color: themeData.canvas,
               textStyle: VouchType.body(themeData.ink),
-              home: const RootGate(),
+              home: const bool.fromEnvironment('VOUCH_GALLERY')
+                  ? const GalleryScreen()
+                  : const RootGate(),
               pageRouteBuilder: vouchPageRoute,
               localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
                 DefaultCupertinoLocalizations.delegate,
