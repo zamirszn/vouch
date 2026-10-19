@@ -57,29 +57,53 @@ class VouchNavShell extends StatelessWidget {
               child: Stack(
                 children: <Widget>[
                   if (count > 1)
-                    SingleMotionBuilder(
-                      value: target,
-                      motion: VouchMotion.resolve(context, VouchMotion.value),
-                      from: target,
-                      builder: (context, value, _) {
-                        final fraction = (value + 0.5) / count;
-                        final x = (fraction * 2 - 1).clamp(-1.0, 1.0);
-                        return Align(
-                          alignment: Alignment(x, 0),
-                          child: Container(
-                            width: 62,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: theme.isDark
-                                  ? const Color(0x14FFFFFF)
-                                  : const Color(0x0F000000),
-                              borderRadius:
-                                  BorderRadius.circular(VouchRadius.pill),
-                              border: Border.all(color: theme.line),
-                            ),
-                          ),
-                        );
-                      },
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: SingleMotionBuilder(
+                          value: target,
+                          motion:
+                              VouchMotion.resolve(context, VouchMotion.value),
+                          from: target,
+                          builder: (context, value, _) {
+                            return LayoutBuilder(
+                              builder: (context, constraints) {
+                                const indicatorWidth = 76.0;
+                                const indicatorHeight = 48.0;
+                                final slot = constraints.maxWidth / count;
+                                final center = (value + 0.5) * slot;
+                                final left = (center - indicatorWidth / 2)
+                                    .clamp(
+                                      0.0,
+                                      constraints.maxWidth - indicatorWidth,
+                                    );
+                                return Stack(
+                                  children: <Widget>[
+                                    Positioned(
+                                      left: left,
+                                      top: (constraints.maxHeight -
+                                              indicatorHeight) /
+                                          2,
+                                      width: indicatorWidth,
+                                      height: indicatorHeight,
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: theme.isDark
+                                              ? const Color(0x14FFFFFF)
+                                              : const Color(0x0F000000),
+                                          borderRadius: BorderRadius.circular(
+                                            VouchRadius.pill,
+                                          ),
+                                          border: Border.all(color: theme.line),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   Row(
                     children: <Widget>[

@@ -495,50 +495,48 @@ class _WitnessTile extends StatelessWidget {
   }
 }
 
-class _ReachActions extends StatelessWidget {
-  const _ReachActions({
-    required this.name,
-    required this.phone,
-    required this.message,
-  });
+class _PromiseCard extends StatelessWidget {
+  const _PromiseCard({required this.promise, required this.scheduleLine});
 
-  final String name;
-  final String? phone;
-  final String message;
+  final String promise;
+  final String? scheduleLine;
 
   @override
   Widget build(BuildContext context) {
     final theme = VouchScope.of(context);
-    final enabled = phone?.trim().isNotEmpty ?? false;
-
-    Widget action(VouchGlyph glyph, String label) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CircleAction(
-              glyph: glyph,
-              size: 46,
-              onTap: enabled
-                  ? () => showContactSheet(
-                        context,
-                        name: name,
-                        phone: phone,
-                        message: message,
-                      )
-                  : null,
-            ),
-            const SizedBox(height: 6),
-            Text(label, style: VouchType.label(theme.faint, size: 8)),
-          ],
-        );
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          action(VouchGlyph.phone, 'CALL'),
-          action(VouchGlyph.message, 'WHATSAPP'),
-          action(VouchGlyph.mail, 'SMS'),
+          Text(
+            'THE PROMISE',
+            style: VouchType.label(theme.muted, size: 9),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            promise,
+            style: VouchType.cardTitle(theme.ink).copyWith(
+              fontSize: 19,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: <Widget>[
+              VouchIcon(VouchGlyph.clock, size: 14, color: theme.muted),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  scheduleLine ?? 'No rhythm set yet',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: VouchType.caption(theme.muted)
+                      .copyWith(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1055,11 +1053,11 @@ class _WitnessHome extends StatelessWidget {
           const SizedBox(height: 18),
           Reveal(
             index: 4,
-            child: _ReachActions(
-              name: ownerFirst,
-              phone: track.ownerPhone,
-              message:
-                  'Hey $ownerFirst, checking in on your Vouch promise: ${track.promise}. Did you get it done today?',
+            child: _PromiseCard(
+              promise: track.promise,
+              scheduleLine: track.schedule == null
+                  ? null
+                  : '${track.schedule!.summary} · ${track.schedule!.zoneLabel}',
             ),
           ),
           const SizedBox(height: 22),
