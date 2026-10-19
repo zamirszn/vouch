@@ -9,11 +9,11 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:motor/motor.dart';
 import 'package:provider/provider.dart';
 
 import '../components/dot_matrix_number.dart';
 import '../components/glass_card.dart';
+import '../components/reveal.dart';
 import '../components/stat_tile.dart';
 import '../components/vertical_ruler.dart';
 import '../components/vouch_button.dart';
@@ -25,7 +25,6 @@ import '../components/vouch_top_bar.dart';
 import '../components/vouch_toast.dart';
 import '../components/week_strip.dart';
 import '../core/date_utils.dart';
-import '../design/vouch_motion.dart';
 import '../design/vouch_theme.dart';
 import '../design/vouch_tokens.dart';
 import '../design/vouch_type.dart';
@@ -140,52 +139,6 @@ class _HomeScroll extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Staggered entrance used by the page sections.
-class Reveal extends StatefulWidget {
-  const Reveal({
-    super.key,
-    required this.child,
-    this.index = 0,
-  });
-
-  final Widget child;
-  final int index;
-
-  @override
-  State<Reveal> createState() => _RevealState();
-}
-
-class _RevealState extends State<Reveal> {
-  bool _shown = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final delay = Duration(milliseconds: 50 + widget.index * 70);
-    Future<void>.delayed(delay, () {
-      if (mounted) setState(() => _shown = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (VouchMotion.reduced(context)) return widget.child;
-    return SingleMotionBuilder(
-      value: _shown ? 1 : 0,
-      from: 0,
-      motion: _shown ? VouchMotion.enter : VouchMotion.fade,
-      builder: (context, value, child) => Opacity(
-        opacity: value.clamp(0.0, 1.0),
-        child: Transform.translate(
-          offset: Offset(0, (1 - value) * 18),
-          child: child,
-        ),
-      ),
-      child: widget.child,
     );
   }
 }
