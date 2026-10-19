@@ -8,14 +8,16 @@ reminded at the same moment as the owner, and marks each day kept or missed.
 The owner writes what they did; the witness can call, message, or check in
 person before marking.
 
-The interface is a custom, Material-free design system in the visual language
-of Slava Kornilov / GeexArts: full-bleed state gradients (pending violet, kept
-mint, missed coral, rest graphite), frosted glass panels, dot-matrix numerals,
-vertical rulers, oversized tight grotesque headlines and mono annotations. The
-root is a `WidgetsApp`; there is no `MaterialApp`, `ThemeData`, `ColorScheme`,
-Material icon font or Material widget anywhere in `lib/`. Text fields, sheets,
-dialogs, toasts, switches, buttons, loaders, the time picker and every glyph
-are drawn in-house.
+The interface is **Nocturne**, a custom, Material-free design language in the
+visual language of Slava Kornilov / GeexArts: full-bleed state gradients
+(pending violet, kept mint, missed coral, rest graphite), frosted glass panels,
+dot-matrix numerals, vertical rulers, oversized tight grotesque headlines and
+mono annotations. The portable guide and Claude Code skill live at
+[zamirszn/nocturne-ui](https://github.com/zamirszn/nocturne-ui). The root is a
+`WidgetsApp`; there is no `MaterialApp`, `ThemeData`, `ColorScheme`, Material
+icon font or Material widget anywhere in `lib/`. Text fields, sheets, dialogs,
+toasts, switches, buttons, loaders, the time picker and every glyph are drawn
+in-house.
 
 Motion is built on [`motor`](https://pub.dev/packages/motor): every press
 springs and settles, counters and rulers animate their values, the background

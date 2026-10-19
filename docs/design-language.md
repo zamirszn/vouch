@@ -1,10 +1,16 @@
-# Vouch design language
+# Nocturne — the Vouch design language
 
-The interface is built as a direct study of Slava Kornilov's app shots
-(Dribbble, GeexArts), then adapted to Vouch's single-promise product. It is not
-a Material theme: the app has no `MaterialApp`, `ThemeData`, `ColorScheme`,
-Material icon font or Material widget. Everything is drawn with widgets and
-`CustomPainter`s in `lib/components/` against tokens in `lib/design/`.
+Vouch's interface is **Nocturne**: a direct study of Slava Kornilov's app shots
+(Dribbble, GeexArts), adapted to Vouch's single-promise product. The portable
+guide, prompt and Claude Code skill live at
+[zamirszn/nocturne-ui](https://github.com/zamirszn/nocturne-ui). This document
+covers the implementation as it exists in this app; component names here keep
+the `Vouch*` prefix, while the portable guide uses `Nocturne*`.
+
+It is not a Material theme: the app has no `MaterialApp`, `ThemeData`,
+`ColorScheme`, Material icon font or Material widget. Everything is drawn with
+widgets and `CustomPainter`s in `lib/components/` against tokens in
+`lib/design/`.
 
 The study stills, frames and videos live in `/design-reference/` on the
 designer's machine. That directory is gitignored and never committed; this
